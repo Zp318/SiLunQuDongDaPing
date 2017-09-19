@@ -1,0 +1,21 @@
+package com.huawei.sc_mobile_fwd.pages.dao;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 
+ * SEQ模板Dao接口
+ *
+ */
+public interface SeqTemplateDao
+{
+
+    /**
+     * 检索首数据
+     * 
+     * @param paramsMap 参数
+     * @return 检索的数据
+     */
+    List<Map<String, Object>> queryData(Map<String, Object> paramsMap);
+}

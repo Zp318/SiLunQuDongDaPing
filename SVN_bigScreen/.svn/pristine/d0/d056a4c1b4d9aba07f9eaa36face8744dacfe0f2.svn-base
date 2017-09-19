@@ -1,0 +1,24 @@
+.MainContenct-conatner{
+	width: calc(100% - 0.5rem);
+	height: 100px;
+	
+	margin: 0 auto;
+	margin-top: 0.18rem;
+
+	display: -webkit-flex; /* Safari */
+  	display: flex;
+}
+
+.left-content{
+	flex:1;
+	width: 50%;
+}
+.right-content{
+	flex:1;
+	margin-left: 0.12rem;
+	width: 50%;
+	height: 9.58rem;
+	background: #FFFFFF;
+	border: 1px solid #D1D9E2;
+	border-radius: 6px;
+}

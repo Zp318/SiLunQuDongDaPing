@@ -1,0 +1,66 @@
+{
+    "action": "AGGRE_SDR",
+    "cubes": ["@SDR_NAME@"],
+    "columns": [
+		 {
+            "id": "225020101",
+            "alias": "id",
+            "type": "DIMENSION",
+            "style": "IDENTIFIER"
+         },
+		 {
+            "id": "225020101",
+            "alias": "name",
+            "type": "DIMENSION",
+            "style": "NAME"
+        },
+        {
+            "id": "@MODEL_NAME@",
+            "alias": "value",
+            "type": "MODEL"
+        }
+    ],
+    "conditions": {
+        "relation": "AND",
+        "childs": [
+            {
+                "id": "3600",
+                "operator": "GE",
+                "values": ["@START_TIME@"],
+                "type": "TIME",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            },
+            {
+                "id": "3600",
+                "operator": "LT",
+                "values": ["@END_TIME@"],
+                "type": "TIME",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            },
+            {
+                "id": "225020101",
+                "operator": "ISNOTNULL",
+                "type": "DIMENSION",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            },
+            {
+                "id": "225020101",
+                "operator": "ISNOTNULL",
+                "type": "DIMENSION",
+                "style": "NAME",
+                "ignoreCase": false
+            }
+        ]
+    },
+    "orders": [
+        {
+            "id": "@MODEL_NAME@",
+            "type": "MODEL",
+            "style": "IDENTIFIER",
+            "descending": "@DESC_STATE@"
+        }
+    ]
+}

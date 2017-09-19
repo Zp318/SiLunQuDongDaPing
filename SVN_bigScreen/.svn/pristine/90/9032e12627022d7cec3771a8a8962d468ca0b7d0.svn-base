@@ -1,0 +1,19 @@
+#\u6f2b\u5165\u7528\u6237\u6570\u4fee\u6b63\u503c(\u5b89\u5fbd\u5e38\u9a7b\u5916\u5730\u53f7\u7801\u6570\u91cf600000)
+roaming_in_users_correction_value=-600000
+#\u603b\u7528\u6237\u6570\u4fee\u6b63\u503c
+total_users_correction_value=0
+#4G\u7528\u6237\u6570\u4fee\u6b63\u503c
+total_4g_users_correction_value=0
+#\u770b\u6625\u665a\u7528\u6237\u6570\u4fee\u6b63\u503c
+chunwan_users_correction_value=0
+#\u62a2\u7ea2\u5305\u7528\u6237\u6570\u4fee\u6b63\u503c
+hongbao_users_correction_value=0
+
+#4G\u7528\u6237\u6570\u9884\u8b66\u503c\u4e0b\u7ebf
+total_4g_users_alarm_value_min=10000000
+#4G\u7528\u6237\u6570\u9884\u8b66\u503c\u4e0a\u9650
+total_4g_users_alarm_value_max=25000000
+#\u5c55\u793a\u6570\u636e\u4e0b\u9650\u65e5\u671f\u7684UTC
+query_min_utc=1453996800
+#weixin count coefficient value 
+query_weixin_coefficient=1.0

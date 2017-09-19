@@ -1,0 +1,46 @@
+{
+    "action": "AGGRE_SDR",
+    "cubes": ["@SDR_NAME@"],
+    "columns": [
+		{
+            "id": "203010101",
+            "alias": "name",
+            "type": "DIMENSION",
+            "style": "IDENTIFIER"
+        },
+        {
+            "id": "@MODEL_NAME@",
+            "alias": "value",
+            "type": "MODEL"
+        }
+    ],
+    "conditions": {
+        "relation": "AND",
+        "childs": [
+            {
+                "id": "3600",
+                "operator": "GE",
+                "values": ["@START_TIME@"],
+                "type": "TIME",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            },
+            {
+                "id": "3600",
+                "operator": "LT",
+                "values": ["@END_TIME@"],
+                "type": "TIME",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            },
+            {
+                "id": "203010101",
+                "operator": "CONTAIN",
+				"values": [@TAC_BRAND@],
+                "type": "DIMENSION",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            }
+        ]
+    }
+}

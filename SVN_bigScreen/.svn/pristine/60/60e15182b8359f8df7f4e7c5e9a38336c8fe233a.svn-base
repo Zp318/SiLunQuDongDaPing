@@ -1,0 +1,89 @@
+/**
+ * Created by gonghong on 2017-05-16;
+ * @description [VoLTE通话时长占比容器组件]
+ */
+
+import Apis,{PARAMS_ID} from '../../utils/apis';
+
+import {getData,guid} from '../../utils/util';
+
+import EchartsBarBox from '../EchartsBarBox/EchartsBarBox';
+
+import React,{Component} from 'react';
+
+export default class CallRatioContaner extends Component{
+	constructor(props){
+		super();
+		this.state={
+			barId:[],
+			starttime:"",
+			endtime:"",
+			option:{
+				unit:"",
+				legend:"",
+				xAxisData:[],
+				seriesData:[]
+			}
+		}
+		this.starttime;
+		this.endtime;
+	}
+	componentDidMount(){
+		/**
+		 * @function:组件渲染完成;
+		 */
+		let me=this;
+		getData(
+			Apis.PAGE_URL,
+			{
+				indicators:JSON.stringify(PARAMS_ID.SF_VOLTE_CALL_PARAM)
+			},
+			function(data){
+				if(data.code==200){
+					me.starttime=data.starttime;
+					me.endtime=data.endtime;
+					var xAxisData=[];
+					var seriesData=[];
+					var barId=[];
+					var unit=data.data[0].unit;
+					var legend=data.data[0].legend;
+					data.data[0].data.map(function(item){
+						xAxisData.push(item.name);
+						seriesData.push(Number(item.value));
+						barId.push(item.id);
+
+					})
+					me.setState({
+						option:{
+							unit:unit,
+							legend:legend,
+							seriesData:seriesData,
+							xAxisData:xAxisData 
+						},
+						barId:barId,
+						
+					})
+				}
+			}
+		)
+	}
+	echartOnClick(event){
+		var me=this;
+		var url=window.urlConfig.callTimePercent+`?startTime=${me.starttime}&endTime=${me.endtime}`;
+		if(top.showTabPanel){
+           top.showTabPanel("VoLTE通话时长占比",guid(),url);
+        }else{
+        	window.open(url);
+        }
+	}
+	render(){
+		return(
+			<div>
+				<EchartsBarBox indexName='VoLTE通话时长占比' 
+				echartId='callRatioId' 
+				options={this.state.option}
+				echartOnClick={this.echartOnClick.bind(this)}/>
+			</div>
+		)
+	}
+}

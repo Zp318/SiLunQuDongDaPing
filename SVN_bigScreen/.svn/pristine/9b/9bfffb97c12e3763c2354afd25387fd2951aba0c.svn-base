@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:aop="http://www.springframework.org/schema/aop" xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:util="http://www.springframework.org/schema/util"
+    xsi:schemaLocation="
+    http://www.springframework.org/schema/beans    http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd 
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.2.xsd
+    http://www.springframework.org/schema/aop 
+    http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+    http://www.springframework.org/schema/mvc 
+    http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd 
+    ">
+
+    <bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean" destroy-method="destroy">
+        <property name="triggers">
+            <list>
+                <ref local="cleanOverdueFileTrigger"/> 
+            </list>
+        </property>
+    </bean>
+    
+   <bean id="cleanOverdueFileJobDetail"
+        class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="targetObject" ref="cleanOverdueFileJob" />
+        <property name="targetMethod" value="deleteOverdueFile" />
+        <property name="concurrent" value="false" />
+    </bean>
+    
+    <bean id="cleanOverdueFileTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean">
+        <property name="jobDetail" ref="cleanOverdueFileJobDetail" />
+        <!--每天的早上1:10触发 -->
+    <property name="cronExpression">
+        <value>0 10/60 * * * ?</value>
+    </property>
+    </bean>
+</beans>

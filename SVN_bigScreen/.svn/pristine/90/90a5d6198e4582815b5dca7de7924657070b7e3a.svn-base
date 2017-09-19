@@ -1,0 +1,160 @@
+package com.huawei.sc_mobile_fwd.pages.utils;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
+
+import com.huawei.sc_mobile_fwd.pages.constants.Constants;
+
+import edu.emory.mathcs.backport.java.util.Arrays;
+
+/**
+ * 查询指标匹配
+ * @author SF2011 2017年05月17日 
+ */
+@SuppressWarnings("unchecked")
+public final class IndicatorManager
+{
+	/**日志*/
+	private static final Logger logger = LoggerFactory.getLogger(IndicatorManager.class);
+	
+	/**默认分割符*/
+	private static final String DEFAULT_SEPARATOR = ",";
+	
+	/**指标管理集合*/
+	private static final Properties INDICATOR_PROPERTIES;
+	
+	/**指标管理对象*/
+	private static IndicatorManager indicatorManager;
+	
+	/**客户感知类指标集合*/
+	private static List<String> customer_perception_indicatros = new ArrayList<String>();
+	
+	/**支撑市场类指标集合*/
+	private static List<String> market_support_indicatros = new ArrayList<String>();
+	
+	/**CSV获取指标集合*/
+	private static List<String> csv_indicatros = new ArrayList<String>();
+	
+	static
+	{
+		INDICATOR_PROPERTIES = PropertiesUtil.getProperties(Constants.INDICATORS_CONF_FILE);
+		//刷新
+		refresh();
+	}
+	
+	private IndicatorManager()
+	{
+	}
+	
+	/**
+	 * 获取实例
+	 * @return 实例
+	 */
+	public static IndicatorManager instance()
+	{
+		if (indicatorManager == null) 
+		{
+			synchronized (IndicatorManager.class) 
+			{
+				if (indicatorManager == null)
+				{
+					indicatorManager = new IndicatorManager();
+				}
+			}
+		}
+		return indicatorManager; 
+	}
+	
+	/**
+	 * 获取指标归属
+	 * @param indicator 指标名
+	 * @return true/false
+	 */
+	public String getIndicatorLocation(List<String> indicators)
+	{
+		logger.info("[sc_mobile_fwd]: IndicatorManager.getIndicatorLocation.Indicators={}", indicators);
+		String location = "";
+		//客户感知类
+		if (customer_perception_indicatros.containsAll(indicators))
+		{
+			location = Constants.CUSTOMER_PERCEPTION;
+		}
+		//支撑市场类
+		else if (market_support_indicatros.containsAll(indicators))
+		{
+			location = Constants.MARKET_SUPPORT;
+		}
+		logger.info("[sc_mobile_fwd]: IndicatorManager.getIndicatorLocation.Location={}", location);
+		return location;
+	}
+	
+	/**
+	 * 获取值
+	 * @param key 键
+	 * @return 值
+	 */
+	public String getValue(String key)
+	{
+		String value = INDICATOR_PROPERTIES.getProperty(key.trim());
+		logger.info("[sc_mobile_fwd]: IndicatorManager.getValue.Value={}", value);
+		return value.trim();
+	}
+	
+	/**
+	 * 判断是否是CSV获取指标
+	 * @param indicator 指标
+	 * @return true/false
+	 */
+	public boolean isCsvIndicator(String indicator)
+	{
+		logger.info("[sc_mobile_fwd]: IndicatorManager.isCsvIndicator.Indicator={}", indicator);
+		boolean isContains = csv_indicatros.contains(indicator);
+		logger.info("[sc_mobile_fwd]: IndicatorManager.isCsvIndicator.IsOrNot={}", isContains);
+		return isContains;
+	}
+	
+	private static void refresh()
+	{
+		//客户感知类指标
+		String customer = INDICATOR_PROPERTIES.getProperty("CUSTOMER_PERCEPTION_INDICATORS").trim();
+		if (!StringUtils.isEmpty(customer))
+		{
+			customer_perception_indicatros = Arrays.asList(customer.split(DEFAULT_SEPARATOR));
+		}
+		else
+		{
+			customer_perception_indicatros = new ArrayList<String>();
+		}
+		
+		//支撑市场类指标
+		String market = INDICATOR_PROPERTIES.getProperty("MARKET_SUPPORT_INDICATORS").trim();
+		if (!StringUtils.isEmpty(market))
+		{
+			market_support_indicatros = Arrays.asList(market.split(DEFAULT_SEPARATOR));
+		}
+		else
+		{
+			market_support_indicatros = new ArrayList<String>();
+		}
+		
+		//CSV获取指标
+		String csv = INDICATOR_PROPERTIES.getProperty("CSV_INDICATORS").trim();
+		if (!StringUtils.isEmpty(csv))
+		{
+			csv_indicatros = Arrays.asList(csv.split(DEFAULT_SEPARATOR));
+		}
+		else
+		{
+			csv_indicatros = new ArrayList<String>();
+		}
+		
+		
+		logger.info("[sc_mobile_fwd]: IndicatorManager.refresh.customer={},market={}", 
+				customer_perception_indicatros, market_support_indicatros);
+	}
+}

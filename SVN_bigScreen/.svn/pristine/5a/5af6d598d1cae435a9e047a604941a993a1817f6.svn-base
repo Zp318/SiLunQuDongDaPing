@@ -1,0 +1,180 @@
+package com.huawei.sc_mobile_fwd.comm.controller;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.huawei.seq.common.Const;
+import com.huawei.seq.tools.CloseableUtils;
+import com.huawei.seq.tools.ExportUtils;
+import com.huawei.seq.tools.SecurityFliterUtils;
+
+/**
+ * 公共导出接口
+ */
+@Controller
+@RequestMapping(value = "/export")
+public class ExportController
+{
+	/**
+	 * BUFFER_SIZE
+	 */
+    private static final int BUFFER_SIZE = 8192;
+    
+    /**
+     * 初始化日志
+     */
+    private static final Logger logger = LoggerFactory.getLogger(ExportController.class);
+    
+    /**
+     * 导出公共接口
+     * @param request 请求
+     * @param response 响应
+     */
+    @RequestMapping("/downloadExportFile.action")
+    public void downLoadFile(HttpServletRequest request, HttpServletResponse response)
+    {
+        String fileName = request.getParameter("filename");
+        String exportName = request.getParameter("exportname");
+        
+        String ifDelete = request.getParameter("ifdelete");
+        if (ifDelete == null)
+        {
+            ifDelete = "true";
+        }
+        if (fileName == null)
+        {
+            logger.error("[sc_mobile_fwd_common_export] ExportCommon downLoadFile fileName or exportName is null");
+            return;
+        }
+     
+        fileName = SecurityFliterUtils.whiteListSecurityCode(fileName);
+        if (StringUtils.isBlank(fileName))
+        {
+            logger.error("[sc_mobile_fwd_common_export] $download. file absolute path is null. can't export file");
+            return;
+        }
+        
+        String rootPathList = ExportUtils.getBasePath();
+        fileName = rootPathList + fileName;
+        
+        boolean currentFlag = SecurityFliterUtils.checkDownLoadPath(rootPathList + Const.EXPORT_PATH, fileName,
+                         fileName.substring(fileName.lastIndexOf(".") + 1), Const.EXPORT_PRIVATE_TYPE);
+        
+        File file = new File(fileName);
+        
+        if (!file.exists() || file.isDirectory())
+        {
+            try
+            {
+                logger.error("[sc_mobile_fwd_common_export] $download. file not exists. file: {}",
+                        SecurityFliterUtils.loggerwhiteListSecurityCode(file.getCanonicalPath()));
+            }
+            catch (IOException e)
+            {
+                logger.error("[sc_mobile_fwd_common_export]: getCanonicalPath is error throws IOException");
+            }
+            return;
+        }
+        exportName = SecurityFliterUtils.whiteListSecurityCode(exportName);
+        // 导出文件名为空
+        if (exportName == null || StringUtils.isBlank(exportName))
+        {
+            exportName = file.getName();
+           
+        }
+        FileInputStream fis = null;
+        try
+        {
+            fis = new FileInputStream(file);
+            byte[] data = new byte[0];
+            if (currentFlag)
+            {
+                data = readStream(fis);
+            }
+            response.setContentType("application/x-msdownload");
+            response.setContentLength(data.length);
+            response.setHeader("Content-Disposition", "attachment;filename= \"" 
+                     + new String(exportName.getBytes("gb2312"), "ISO8859-1") + "\"");
+            response.getOutputStream().write(data);
+        } 
+        catch (IOException e)
+        {
+            logger.error("[sc_mobile_fwd_common_export] ExportCommon downLoadFile exception on export file.");
+        }
+        finally
+        {
+            CloseableUtils.closeStream(fis);
+            if ("true".equals(ifDelete))
+            {
+                deleteFile(file);
+            }
+        }
+    }
+    
+    private byte[] readStream(InputStream is)
+    {
+        
+        byte[] data = null;
+        if (null == is)
+        {
+            logger.error("[sc_mobile_fwd_common_export] 'is' param is empty");
+        }
+        else
+        {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            BufferedInputStream inputStream = new BufferedInputStream(is);
+            try
+            {
+                byte[] dataBuf = new byte[BUFFER_SIZE];
+                int recvLen = 0;
+                while ((recvLen = inputStream.read(dataBuf)) != -1)
+                {
+                    outputStream.write(dataBuf, 0, recvLen);
+                }
+                data = outputStream.toByteArray();
+            }
+            catch (IOException e)
+            {
+                logger.error("[sc_mobile_fwd_common_export] read stream exception: throws IOException");
+            }
+            finally
+            {
+                CloseableUtils.closeStream(outputStream);
+                CloseableUtils.closeStream(inputStream);
+            }
+        }
+        
+        return data;
+    }
+    
+    private void deleteFile(File file)
+    {
+        if (!file.delete())
+        {
+            // delete file fail
+            try
+            {
+                logger.error("[sc_mobile_fwd_common_export] $download->File Delete Failure: {}",
+                        SecurityFliterUtils.loggerwhiteListSecurityCode(file.getCanonicalPath()));
+            }
+            catch (IOException e)
+            {
+                logger.error("[sc_mobile_fwd_common_export]: getCanonicalPath is error throws IOException");
+            }
+        }
+    }
+    
+}

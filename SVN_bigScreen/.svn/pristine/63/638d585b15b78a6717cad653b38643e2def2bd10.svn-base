@@ -1,0 +1,4 @@
+
+csvExportEncode=GBK
+isDebugLicense=false
+enablePrintCaller=true

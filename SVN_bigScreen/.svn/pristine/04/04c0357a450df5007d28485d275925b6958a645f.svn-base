@@ -1,0 +1,6 @@
+﻿Ext.namespace('ecm.commontip');
+ecm.commontip.page = function(){
+	this.tip_403 = 'This operation is not authorized.';
+	this.dberror_6eae9ac6827c0dfca82fe3d12b4c790b = 'Failed to connect to the database.';
+	this.tip_exception = 'Access failed.';
+};

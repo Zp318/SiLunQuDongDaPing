@@ -1,0 +1,81 @@
+{
+    "action": "AGGRE_SDR",
+    "cubes": [
+                "SDR_TAC_SUBSCRIBER_NUM"
+            ],
+    "columns": [
+        {
+            "id": "203010101",
+            "alias": "BRAND_NAME",
+            "type": "DIMENSION",
+            "style": "IDENTIFIER"
+        },
+        {
+            "id": "COMMON_VOLTE_VOLTE_USER_NUM",
+            "alias": "VOLTE_USER_NUM",
+            "type": "COUNTER",
+            "style": "IDENTIFIER"
+        }
+    ],
+    "conditions": {
+        "relation": "AND",
+        "childs": [
+            {
+                "id": "86400",
+                "operator": "GE",
+                "values": [
+                    "@START_TIME@"
+                ],
+                "type": "TIME",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            },
+            {
+                "id": "86400",
+                "operator": "LT",
+                "values": [
+                    "@END_TIME@"
+                ],
+                "type": "TIME",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            },
+            {
+                "id": "203010101",
+                "operator": "ISNOTNULL",
+                "type": "DIMENSION",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            },
+            {
+                "id": "203010101",
+                "operator": "NOTCONTAIN",
+                "values": [
+                    "Unknown",
+                    "UNKNOWN",
+                    "unknown"
+                ],
+                "type": "DIMENSION",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            },
+            {
+                "id": "225020101",
+                "operator": "ISNOTNULL",
+                "type": "DIMENSION",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            }
+        ]
+    },
+    "orders": [
+        {
+            "id": "COMMON_VOLTE_VOLTE_USER_NUM",
+            "type": "COUNTER",
+            "style": "IDENTIFIER",
+            "descending": true
+        }
+    ],
+    "start": 0,
+    "limit": 10
+}

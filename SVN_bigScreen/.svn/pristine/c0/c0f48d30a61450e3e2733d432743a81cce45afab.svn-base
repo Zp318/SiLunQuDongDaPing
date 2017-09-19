@@ -1,0 +1,140 @@
+export let pieOption= {
+    legend: {
+        x : 'center',
+        bottom:'20px',
+        selectedMode:false,
+        data:[]
+    },
+    color:['#3DCCE4','#9BA6FC','#EF8DFF','#FF6BA2','#FF9B78','#DEDC52','#5AD778','#3DCCE4','#54B0DD','#C898DF'],
+    calculable : true,
+    radar: {
+        // shape: 'circle',
+        center: ['75%','45%'],
+        radius: 80,
+        name:{
+            textStyle:{
+                color:'#6D9FD4'
+            }
+        },
+        indicator: []
+    },
+    series : [
+        {
+            name:'',
+            type:'pie',
+            radius : [50, 80],
+            center : ['25%', '45%'],
+            label:{
+            	normal:{
+            		show:true,
+            		formatter:function(params){
+            			return params.name+" "+params.percent+"%";
+            		}
+            	}
+            },
+            data:[]
+        },
+        {
+        	name: '',
+        	type: 'radar',
+        	
+            itemStyle:{
+                normal:{
+                    areaStyle:{
+                       color:'#34CBFF',
+                       opacity:0.2 
+                    },
+                    color:'#2b96d8'
+                }
+            },
+        	data : []
+   		}
+    ]
+};
+export let barLineOption={
+	tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+            type: 'shadow'
+        },
+        formatter:'{b}<br />{a0}:{c0}%<br />{a1}:{c1}%<br />{a2}:{c2}%<br />{a3}:{c3}%'
+    },
+    legend: {
+    	top:'3%',
+    	right:'70px',
+        data: []
+    },
+    color: ["#3dcce4","#54BEF2","#9BC1FC","#09899E"],
+    grid: {
+        left: '4%',
+        right: '3%',
+        bottom: '5%',
+        top: '16%',
+        containLabel: true,
+        borderColor:"#D1D9E2"
+    },
+    xAxis : [
+    	{
+            type : 'category',
+            data : [],
+            axisLine:{
+            	lineStyle:{
+            		color:"#4E545D"
+            	}
+            },
+            axisTick:{
+            	show:false
+            },
+            axisLabel:{
+            	interval:0,
+            	textStyle:{
+            		color:"#4E545D",
+            		fontSize:12
+            	}
+            }
+        }
+    ],
+    yAxis:[
+        {
+            type : 'value',
+            name:"%",
+            nameGap:5,
+            max:100,
+            axisLine:{
+            	lineStyle:{
+            		color:"#4E545D"
+            	}
+            },
+            axisTick:{
+            	show:false
+            },
+            axisLabel:{
+            	textStyle:{
+            		color:"#4E545D"
+            	}
+            }
+        },
+        {
+            type : 'value',
+            name:"%",
+            nameGap:5,
+            splitLine:{
+            	show:false
+            },
+            axisLine:{
+            	lineStyle:{
+            		color:"#4E545D"
+            	}
+            },
+            axisTick:{
+            	show:false
+            },
+            axisLabel:{
+            	textStyle:{
+            		color:"#4E545D"
+            	}
+            }
+        }
+    ],
+    series:[]
+}

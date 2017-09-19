@@ -1,0 +1,52 @@
+package com.huawei.sc_mobile_fwd.pages.utils;
+
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.util.List;
+
+/**
+ * 时间处理工具类 
+ * @author SF2011 2017年5月18日
+ */
+public final class CommonUtils
+{
+	private CommonUtils()
+	{
+	}
+	
+	/**
+	 * 非四舍五入截取小数
+	 * @param decimals 小数 
+	 * @param places 截取位数
+	 * @return 截取值
+	 */
+	public static String cut(double decimals, int places)
+	{
+		DecimalFormat formater = new DecimalFormat();
+		formater.setMaximumFractionDigits(places);
+		formater.setGroupingSize(0);
+		formater.setRoundingMode(RoundingMode.FLOOR);
+		return formater.format(decimals);
+	}
+	
+	/**
+	 * 转换List为字符串
+	 * @param tacNos 终端TAC码
+	 * @return TAC码字符串
+	 */
+	public static String transformListToStr(List<Object> tacNos)
+	{
+		StringBuilder builder = new StringBuilder();
+		for (Object tac : tacNos)
+		{
+			builder.append("\"");
+			builder.append(tac.toString());
+			builder.append("\"");
+			if (tacNos.indexOf(tac) < tacNos.size() - 1)
+			{
+				builder.append(",");
+			}
+		}
+		return builder.toString();
+	}
+}

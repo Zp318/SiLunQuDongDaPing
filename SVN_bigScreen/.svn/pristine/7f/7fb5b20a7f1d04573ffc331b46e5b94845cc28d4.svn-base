@@ -1,0 +1,329 @@
+/*
+*created by zhangpeng at 2017-05-16
+*生成echarts图表组件：
+*初始化渲染、定时刷新、点击跳转
+ */
+
+import React, { Component } from 'react';
+import './BarComponentStyle.css';
+import urls from '../../urls/urls';
+import $ from "jquery"; 
+import echarts from 'echarts';
+
+class BarComponent extends Component {
+	componentDidMount(){
+		const me = this;
+		var startTime;
+		var endTime;
+		var idArray = [];
+		var minY = 60;
+		var darpRateMax = 0.12;
+		var ele = echarts.init(document.getElementsByClassName("bar_init")[me.props.initIndex]);
+		/*
+		*echartsRender函数：
+		*用作echarts图表初始化渲染
+		 */
+		var echartsRender = function(){
+			$.ajax({
+				type:"POST",
+				url:urls.indicators,
+				dataType:"json",
+				headers:{
+					'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+					"X-CSRF-TOKEN":$("meta[name='_csrf']").attr("content")
+				},
+				data:me.props.initIndex==1 ? {indicators:JSON.stringify([me.props.dataone,me.props.datatwo])} : {indicators:JSON.stringify([me.props.dataone])}
+			}).done(function(res){
+				if(res.code == "200"){
+					if(res.data.length > 1 && res.data[0].data.length == 0 && res.data[1].data.length == 0){
+						// 请求成功,但数据为0条，显示“NoData”
+						$(".bar_init").text("No Data");
+						$(".bar_init").addClass("nodata");
+					}else if(res.data.length == 1 && res.data[0].data.length == 0){
+						// 请求成功,但数据为0条，显示“NoData”
+						$(".bar_init").text("No Data");
+						$(".bar_init").addClass("nodata");
+					}else{
+						startTime = res.starttime;
+						endTime = res.endtime;
+						/*
+						*xAxisData——X轴数组
+						*seriesOne——左轴数组
+						*seriesTwo——右轴数组
+						 */
+						var xAxisData=[];
+						var seriesOne=[];
+						var seriesTwo=[];
+						for(var i=0;i<res.data[0].data.length;i++){
+							xAxisData.push(res.data[0].data[i].NAME);
+							seriesOne.push(res.data[0].data[i].VALUE);
+							idArray.push(res.data[0].data[i].ID)
+						}
+						if(res.data.length > 1){
+							for(var i=0;i<res.data[1].data.length;i++){
+								seriesTwo.push(res.data[1].data[i].VALUE);
+							}
+						}
+
+						// 掉话率的最大值
+						darpRateMax = Math.max.apply(Math,seriesOne);
+
+						// 求左轴的最小值
+						minY = Math.min.apply(Math,seriesOne);
+
+						//图表配置项 
+						var option ={
+							color: ["#3DCCE4" , "#2B9CD4"],
+							tooltip : {
+								show:true,
+						        trigger:"item",
+						        confine:true,
+						        formatter: function(e){
+						        	if(e.seriesName === "VOICE_MO_ALERT_AVG_DELAY"){
+						        		return e.name + '<br />' + e.value + 'ms'
+						        	}else{
+						        		return e.name + '<br />' + e.value + '%'
+						        	}
+						        }
+						    },
+						    grid: {
+						        left: '4%',
+						        right: '3%',
+						        bottom: '5%',
+						        top: '10%',
+						        containLabel: true,
+						        borderColor:"#D1D9E2"
+						    },
+						    xAxis : [
+					        	{
+						            type : 'category',
+						            data : xAxisData,
+						            axisLine:{
+						            	lineStyle:{
+						            		color:"#4E545D"
+						            	}
+						            },
+						            axisTick:{
+						            	show:false
+						            },
+						            axisLabel:{
+						            	interval:0,
+						            	textStyle:{
+						            		color:"#4E545D",
+						            		fontSize:12
+						            	}
+						            }
+						        }
+						    ],
+						    yAxis : res.data.length > 1 ? [
+						        {
+						            type : 'value',
+						            nameGap:5,
+						            max:100,
+						            min:minY < 90 ? (parseInt(minY)<=5 ? 0 : (parseInt(minY)-5)) : 90,
+						            axisLine:{
+						            	lineStyle:{
+						            		color:"#4E545D"
+						            	}
+						            },
+						            axisTick:{
+						            	show:false
+						            },
+						            axisLabel:{
+						            	textStyle:{
+						            		color:"#4E545D"
+						            	},
+						            	formatter:"{value}%",
+						            	showMaxLabel:true,
+						            	showMinLabel:true
+						            }
+						        },
+						        {
+						            type : 'value',
+						            name:res.data[1].unit,
+						            nameGap:5,
+						            splitLine:{
+						            	show:false
+						            },
+						            axisLine:{
+						            	lineStyle:{
+						            		color:"#4E545D"
+						            	}
+						            },
+						            axisTick:{
+						            	show:false
+						            },
+						            axisLabel:{
+						            	textStyle:{
+						            		color:"#4E545D"
+						            	}
+						            }
+						        }
+						    ] : [
+						    	{
+						            type : 'value',
+						            nameGap:5,
+						            max:res.data[0].legend == "SF_VOLTE_CALL_DROP_RATE_1" ? darpRateMax : 100,
+						            min:(function(){
+						            	if(res.data[0].legend == "SF_VOLTE_CALL_DROP_RATE_1"){
+						            		return 0
+						            	}else if(minY < 90){
+						            		return parseInt(minY)<=5 ? 0 : (parseInt(minY)-5)
+						            	}else{
+						            		return 90
+						            	}
+						            }()),
+						            axisLine:{
+						            	lineStyle:{
+						            		color:"#4E545D"
+						            	}
+						            },
+						            axisTick:{
+						            	show:false
+						            },
+						            axisLabel:{
+						            	textStyle:{
+						            		color:"#4E545D"
+						            	},
+						            	formatter:"{value}%",
+						            	showMaxLabel:true,
+						            	showMinLabel:true
+						            }
+						        }
+						    ],
+						    series: res.data.length > 1 ? [
+						    	{
+						            name:res.data[0].legend,
+						            yAxisIndex:0,
+						            type:'bar',
+						            data:seriesOne,
+						            itemStyle:{
+						            	normal:{
+						            		barBorderRadius: 20
+						            	},
+						            	emphasis:{
+						            		color:"#FF6878"
+						            	}
+						            },
+						            barMaxWidth:22
+						        },
+						        {
+						            name:res.data[1].legend,
+						            type:'line',
+						            yAxisIndex:1,
+						            data:seriesTwo,
+						            itemStyle:{
+						            	emphasis:{
+						            		color:"#FF6878"
+						            	}
+						            },
+						            symbol:"circle",
+						            symbolSize:7
+						        }
+						    ] : [
+						    	{
+						            name:res.data[0].legend,
+						            type:'bar',
+						            data:seriesOne,
+						            itemStyle:{
+						            	normal:{
+						            		barBorderRadius: 20
+						            	},
+						            	emphasis:{
+						            		color:"#FF6878"
+						            	}
+						            },
+						            barMaxWidth:22
+						        }
+						    ]
+						}
+						ele.setOption(option);
+					}
+				}else{
+					// 请求成功，code != 200,显示“NoData”
+					$(".bar_init").text("No Data");
+					$(".bar_init").addClass("nodata");
+				}
+			}).fail(function(err){
+				// 请求失败,显示“NoData”
+				$(".bar_init").text("No Data");
+				$(".bar_init").addClass("nodata");
+			});
+		}
+
+		// 初始化渲染
+		echartsRender();
+
+		// 窗口大小变化时图表自适应
+		window.addEventListener("resize",function(){
+			ele.resize();
+		});	
+
+		// 15分钟定时刷新
+		setInterval(function(){
+			ele.clear();
+			echartsRender();
+		},900000);	
+
+		// 点击柱状图或趋势图
+		ele.on("click",(e) => {
+			/*
+			*regionid——地市ID
+			*drillUrlParam——传参
+			 */
+			var regionid = idArray[e.dataIndex];
+			var drillUrlParam = "";
+
+			/*
+			*跳转函数toUrl
+			*@url：下钻的url路径
+			 */
+			var toUrl = function(pagename,url,params){
+				if(top.showTabPanel && $.type( top.showTabPanel ) === "function"){
+					if(params === ""){
+						top.showTabPanel(pagename,specialId.replace(/[^\w]/gi,""),url+params);
+					}else{
+						top.showTabPanel(pagename,params.replace(/[^\w]/gi,""),url+params);
+					}
+				}else{
+					var newTab=window.open('about:blank');
+					newTab.location.href=url + params;
+					// window.open(url + params);
+				}
+			}
+			// 点击图表下钻到对应页面
+			if(e.seriesType === "bar" && e.seriesName === "SF_VOLTE_REGISTER_SUCC_RATE_1"){
+				drillUrlParam = "?areaDim=" + regionid + "&timeDim=3600" + "&tabKey=2";
+				toUrl("VoLTE注册成功率",window.urlConfig.registerSuccessRate,drillUrlParam);
+			}else if(e.seriesType === "bar" && e.seriesName === "SF_VOLTE_CONNECT_RATE_1"){
+				drillUrlParam = "?areaDim=" + regionid + "&timeDim=3600" + "&tabKey=4";
+				toUrl("VoLTE接通率",window.urlConfig.connectRate,drillUrlParam);
+			}else if(e.seriesType === "line" && e.seriesName === "VOICE_MO_ALERT_AVG_DELAY"){
+				drillUrlParam = "?dsId=0bc249a8-4dd5-e300-0e39-89253775470d&type=0&templateType=0";
+				toUrl("VoLTE接通时延",window.urlConfig.connectDelay,drillUrlParam);
+			}else if(e.seriesType === "bar" && e.seriesName === "SF_SV_ESRVCC_SUCC_RATE_1"){
+				drillUrlParam = "?areaDim=" + regionid + "&timeDim=3600" + "&tabKey=6";
+				toUrl("SRVCC切换成功率",window.urlConfig.srvccSuccessRate,drillUrlParam);
+			}else if(e.seriesType === "bar" && e.seriesName === "SF_VOLTE_CALL_DROP_RATE_1"){
+				drillUrlParam = "?areaDim=" + regionid + "&timeDim=3600" + "&tabKey=5";
+				toUrl("VoLTE掉话率",window.urlConfig.callDropRate,drillUrlParam);
+			}else if(e.seriesType === "bar" && e.seriesName === "SF_VOLTE_MOS_GOOD_RATE"){
+				drillUrlParam = "?areaDim=" + regionid + "&timeDim=3600" + "&tabKey=3";
+				toUrl("MOS大于3.0占比",window.urlConfig.mosGoodRate,drillUrlParam);
+			}else if(e.seriesType === "bar" && e.seriesName === "CSFB_FALLBACK_SUCCESS_RATE"){
+				var specialId = "areaDim=" + regionid + "&timeDim3600" + "&tabKey";
+				toUrl("CSFB回落成功率",window.urlConfig.fallbackSuccessRate,"");
+			}
+		})	
+	}
+
+	render() {
+	    return (
+	      <div className="bar_init">
+	       	
+	      </div>
+	    );
+	}
+}
+
+export default BarComponent;

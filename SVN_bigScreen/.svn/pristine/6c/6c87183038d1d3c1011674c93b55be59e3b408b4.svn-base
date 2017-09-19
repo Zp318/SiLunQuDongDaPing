@@ -1,0 +1,50 @@
+package com.huawei.sc_mobile_fwd.pages.utils;
+
+import java.util.Calendar;
+import java.util.Date;
+
+/**
+ * 时间处理工具类 
+ * @author SF2011 2017年5月18日
+ */
+public final class DateUtils
+{
+	private DateUtils()
+	{
+	}
+	
+	/***
+	 * 获取上一小时结束时间戳
+	 * @param current 当前时间
+	 * @return 上一小时结束时间戳
+	 */
+	public static long getLastHourEndTimestamp(Date current)
+	{
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(current);
+		int minute = calendar.get(Calendar.MINUTE);
+		int secend = calendar.get(Calendar.SECOND);
+		int millisec = calendar.get(Calendar.MILLISECOND);
+		long millisecond = minute*60*1000 + secend*1000 + millisec;
+		//秒
+		return (calendar.getTimeInMillis() - millisecond) / 1000;
+	}
+	
+	/***
+	 * 获取上一天结束时间戳
+	 * @param current 当前时间
+	 * @return 上一天结束时间戳
+	 */
+	public static long getLastDayEndTimestamp(Date current)
+	{
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(current);
+		int hour = calendar.get(Calendar.HOUR_OF_DAY);
+		int minute = calendar.get(Calendar.MINUTE);
+		int secend = calendar.get(Calendar.SECOND);
+		int millisec = calendar.get(Calendar.MILLISECOND);
+		long millisecond = hour*60*60*1000 + minute*60*1000 + secend*1000 + millisec;
+		//秒
+		return (calendar.getTimeInMillis() - millisecond) / 1000;
+	}
+}

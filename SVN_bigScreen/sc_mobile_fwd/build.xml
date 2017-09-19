@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<project name="MyProject" basedir="." default="exportJar">  
+    <!-- 设置全局变量 -->  
+    <property name="src" value="src" />  
+    <property name="classes" value="build/classes" />  
+    <property name="dist" value="dist" />  
+    <property name="app.name" value="sc_mobile_fwd" />  
+    <property name="app.version" value="1.0" />  
+    <property name="classes.encode" value="UTF-8" />  
+    <property name="lib" value="WebContent/WEB-INF/lib" />  
+  
+    <path id="classpath">  
+        <fileset dir="${lib}">  
+            <include name="**/*.jar" />  
+        </fileset>  
+    </path>  
+    <target name="init">  
+        <!-- Create the time stamp -->  
+        <tstamp />  
+    </target>  
+  
+    <!-- 编译源文件 -->  
+    <target name="buildFiles" depends="init">  
+        <echo message="start building ....." />  
+        <delete dir="${classes}" />  
+        <mkdir dir="${classes}" />  
+        <javac deprecation="on" debug="on" encoding="${classes.encode}" srcdir="${src}" destdir="${classes}" classpathref="classpath" />  
+        <!--<copy todir="${classes}">-->  
+            <!-- copy config files -->  
+            <!--<fileset dir="${src}" includes="**/*.properties,**/*.xml,**/*.bsh,**/*.logic, **/*.hbm" />  
+        </copy>  -->
+    </target>  
+  
+    <!-- 导出jar文件 -->  
+    <target name="exportJar" depends="buildFiles">  
+        <delete dir="${dist}" />  
+        <!-- Create the distribution directory -->  
+        <mkdir dir="${dist}" />  
+        <!-- Put everything in ${classes} into the MyProject-${DSTAMP}.jar file -->  
+        <jar jarfile="${dist}/SEQ.${app.name}.jar" basedir="${classes}" />  
+    </target>  
+</project> 

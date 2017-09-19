@@ -1,0 +1,54 @@
+package com.huawei.sc_mobile_fwd.pages.dao.impl;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Repository;
+
+import com.huawei.sc_mobile_fwd.comm.thread.QueryTask;
+import com.huawei.sc_mobile_fwd.comm.thread.QueryThreadPool;
+import com.huawei.seq.tools.SCException;
+import com.huawei.sc_mobile_fwd.pages.dao.SeqTemplateDao;
+
+/**
+ * 
+ * SEQ模板Dao实现类
+ *
+ */
+@Repository("seqTemplateDao")
+public class SeqTemplateDaoImpl implements SeqTemplateDao
+{
+
+    /**
+     * 日志
+     */
+    private static final Logger logger = LoggerFactory.getLogger(SeqTemplateDaoImpl.class);
+
+    /**
+     * 检索首页流量数据
+     * 
+     * @param paramsMap 参数
+     * @return 检索的数据
+     * @throws SCException
+     */
+    @Override
+    public List<Map<String, Object>> queryData(Map<String, Object> paramsMap)
+    {
+        logger.debug("[sc_mobile_fwd]: entry SeqTemplateDaoImpl.queryData()");
+        
+        Map<String, String> queryParams = new HashMap<String, String>();
+        queryParams.put("STARTTIME", String.valueOf(paramsMap.get("startTime")));
+        queryParams.put("ENDTIME", String.valueOf(paramsMap.get("endTime")));
+        
+        // 查询
+        List<Map<String, Object>> resultList = 
+            QueryThreadPool.query(new QueryTask("sc_mobile_fwd", queryParams));
+
+        logger.debug("[sc_mobile_fwd]: exit SeqTemplateDaoImpl.queryData()");
+        return resultList;
+    }
+
+}

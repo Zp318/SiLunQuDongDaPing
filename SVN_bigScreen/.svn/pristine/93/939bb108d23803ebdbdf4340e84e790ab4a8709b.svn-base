@@ -1,0 +1,19 @@
+package com.huawei.sc_mobile_fwd.pages.service;
+
+import java.util.Map;
+
+/**
+ * SEQ模板Service接口
+ *
+ */
+public interface SeqTemplateService
+{
+
+    /**
+     * 检索首页数据
+     * 
+     * @param paramsMap 参数
+     * @return 检索的数据
+     */
+    String queryData(Map<String, Object> paramsMap);
+}

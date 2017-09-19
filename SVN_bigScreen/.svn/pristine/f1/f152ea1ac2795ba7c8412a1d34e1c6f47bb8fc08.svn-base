@@ -1,0 +1,148 @@
+package com.huawei.sc_mobile_fwd.comm;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Properties;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.huawei.seq.WebCoreTools;
+
+/**
+ * 
+ * 类名 : PropertiesUtil
+ * 描述: webapp所用配置properties文件读取类
+ */
+public class PropertiesUtil
+{
+    
+    private static Properties properties = new Properties();
+    
+    private static final Logger logger = LoggerFactory.getLogger(PropertiesUtil.class);
+    
+    /**
+     * 声明SQL模板文件名
+     */
+    private static final String SQLTEMPLATE = "sc_mobile_fwd.properties";
+    
+    /*
+     * 加载模板文件
+     */
+    private static boolean loadFile(String filePath)
+    {
+        FileInputStream in = null;
+
+        try
+        {
+            in = new FileInputStream(WebCoreTools.getConfigFile(filePath)
+                    .getFile());
+            properties.load(in);
+        }
+        catch (FileNotFoundException e)
+        {
+            logger.error("[sc_mobile_fwd]: PropertiesUtil.loadFile() error");
+            return false;
+        }
+        catch (IOException e)
+        {
+            logger.error("[sc_mobile_fwd]: load File Failed!");
+        }
+
+        finally
+        {
+            try
+            {
+                if (in != null)
+                {
+                    in.close();  
+                }
+            }
+            catch (IOException e)
+            {
+                logger.error("[sc_mobile_fwd]: Close stream exception!");
+            }
+        }
+        return true;
+    }
+
+    /**
+     * <p>查询PROPERTIES文件获取所需值</p>
+     * @param propertiesKey 对应KEY
+     * @return 对应VALUE
+     */
+    public static String getProperties(String propertiesKey)
+    {
+        if (false == loadFile(SQLTEMPLATE))
+        {
+            return "";
+        }
+        String propertiesValue = "";
+        propertiesValue = properties.getProperty(propertiesKey);
+        return propertiesValue;
+    }
+
+    /**
+     * <p>查询PROPERTIES文件获取所需值</p>
+     * @param fileName properties文件名
+     * @param propertiesKey 对应KEY
+     * @return 对应VALUE
+     */
+    public static String getProperties(String fileName, String propertiesKey)
+    {
+        if (false == loadFile(fileName))
+        {
+            return "";
+        }
+        String propertiesValue = "";
+        propertiesValue = properties.getProperty(propertiesKey);
+        return propertiesValue;
+    }
+
+    /**
+     * 
+     * 方法名: getLong
+     * 描述：获取long类型配置
+     * @param fileName 文件名
+     * @param key key
+     * @return long 值
+     */
+    public static long getLong(String fileName, String key)
+    {
+        String strValue = getProperties(fileName, key);
+        try
+        {
+            long value = Long.parseLong(strValue);
+            return value;
+        }
+        catch (NumberFormatException e)
+        {
+            logger.error("get config " + key + " error");
+        }
+        return 0L;
+    }
+    
+    /**
+     * 
+     * 方法名: getInt
+     * 描述：获取int类型配置
+     * @param fileName 文件名
+     * @param key key
+     * @return int 值
+     */
+    public static int getInt(String fileName, String key)
+    {
+        String strValue = getProperties(fileName, key);
+        try
+        {
+            int value = Integer.parseInt(strValue);
+            return value;
+        }
+        catch (NumberFormatException e)
+        {
+            logger.error("get config " + key + " error");
+        }
+        return 0;
+    }
+}

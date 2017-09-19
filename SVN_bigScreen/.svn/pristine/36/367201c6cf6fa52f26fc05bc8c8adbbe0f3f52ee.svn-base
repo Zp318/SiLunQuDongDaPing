@@ -1,0 +1,30 @@
+/**
+ * Created by gonghong on 2017-05-16;
+ */
+
+import 'whatwg-fetch';
+
+export function getData(url, parm, callback) {
+	let csrfDom = document.querySelector('meta[name="_csrf_header"]'),
+		csrfValueDom = document.querySelector('meta[name="_csrf"]'),
+		headerKey = csrfDom ? (csrfDom.getAttribute('content') || '_csrf_header') : '_csrf_header',
+		headerValue = csrfValueDom ? (csrfValueDom.getAttribute('content') || '_csrf') : '_csrf',
+		options = {
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8'
+			},
+			credentials: 'same-origin'
+		};
+	options.headers[headerKey] = headerValue;
+
+	window.fetch(url,{
+		method: 'post',
+		...options,
+		body: toString(parm) 
+	})
+	.then(checkStatus)
+	.then(parseJSON)
+	.then(
+		data => callback(data)
+	);
+}

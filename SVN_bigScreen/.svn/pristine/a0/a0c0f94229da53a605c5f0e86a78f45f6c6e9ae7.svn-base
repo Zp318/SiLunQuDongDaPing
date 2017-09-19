@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd 
+	http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.2.xsd
+	http://www.springframework.org/schema/aop 
+	http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+	http://www.springframework.org/schema/mvc 
+	http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd 
+	">
+	<context:annotation-config />
+	<aop:aspectj-autoproxy />
+	<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"></bean>
+	<context:component-scan base-package="com.huawei.*" />
+
+	<!-- SQM拦截Flex、Ext请求 -->
+	<bean id="handlerMapping"
+		class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping">
+		<property name="interceptors">
+			<list>
+				<bean class="com.huawei.seq.controller.DispatchByCommandInterceptor" />
+			</list>
+		</property>
+		<property name="order" value="-1" />
+	</bean>
+
+	<!-- SQM请求映射 -->
+	<bean id="mapping" init-method="init"
+		class=" com.huawei.seq.controller.LoadMapping" scope="prototype">
+		<property name="filename" value="commandmapping.properties"></property>
+		<property name="typefilename" value="typeconfig.properties"></property>
+	</bean>
+
+	<bean id="springUtils" class="com.huawei.seq.SpringContextUtils" />
+
+	<bean id="widgetAppContext" class="com.huawei.ApplicationAwareImpl" />
+
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<list>
+				<value>classpath:jdbc.properties</value>
+			</list>
+		</property>
+	</bean>
+
+
+	<bean id="IQ_dataSource" class="com.huawei.seq.dao.SecurityDataSource" destroy-method="close">
+	    <property name="driverClassName" value="${netview.sybase.PSSdr.jdbc.driverClassName}"/>
+	    <property name="url" value="${netview.sybase.PSSdr.jdbc.url}" />
+	    <property name="username" value="${netview.sybase.PSSdr.jdbc.username}" />
+		<property name="password" value="${netview.sybase.PSSdr.jdbc.password}" />
+		<property name="initialSize" value="${netview.sybase.PSSdr.jdbc.initialSize}" />
+		<property name="maxActive" value="${netview.sybase.PSSdr.jdbc.maxActive}" />
+		<property name="maxIdle" value="${netview.sybase.PSSdr.jdbc.maxIdle}" />
+		<property name="minIdle" value="${netview.sybase.PSSdr.jdbc.minIdle}" />
+		<property name="logAbandoned" value="${netview.sybase.PSSdr.jdbc.logAbandoned}" /> 
+		<property name="removeAbandoned" value="${netview.sybase.PSSdr.jdbc.removeAbandoned}" /> 
+		<property name="removeAbandonedTimeout" value="${netview.sybase.PSSdr.jdbc.removeAbandonedTimeout}" /> 
+		<property name="maxWait" value="${netview.sybase.PSSdr.jdbc.maxWait}" /> 
+		<property name="testOnBorrow" value="${netview.sybase.PSSdr.jdbc.testOnBorrow}" /> 
+		<property name="validationQuery" value="${netview.sybase.PSSdr.jdbc.validationQuery}" /> 
+		<property name="timeBetweenEvictionRunsMillis" value="${netview.sybase.PSSdr.jdbc.timeBetweenEvictionRunsMillis}" /> 
+		<property name="minEvictableIdleTimeMillis" value="${netview.sybase.PSSdr.jdbc.minEvictableIdleTimeMillis}" /> 
+		<property name="schema" value="SybaseIQ" />
+	</bean>
+
+	<!-- 定义应用程序的资源文件 -->
+	<bean id="messageSource" class="com.huawei.seq.SEQBundleMessageSource">
+		<property name="basePath" value="WEB-INF/conf" />
+		<property name="cacheSeconds" value="0" />
+	</bean>
+
+	<mvc:annotation-driven />
+
+	<!-- 定义jsp文件视图解析器 -->
+	<bean class="com.huawei.HuaweiViewResolver">
+		<property name="viewClass"
+			value="org.springframework.web.servlet.view.JstlView"></property>
+		<property name="prefix" value="/WEB-INF/pages/;/pages/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- one of the properties available; the maximum file size in bytes -->
+		<property name="maxUploadSize" value="100000000" />
+		<property name="resolveLazily" value="true"/>
+	</bean>
+	
+	<!-- 定义Spring的线程池，用于执行多线程任务 -->
+	<bean id="bigthreadPool" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+	    <property name="corePoolSize" value="5" />
+	    <property name="maxPoolSize" value="5" />
+	</bean>
+	
+	<!-- Spring的线程池，用于执行定时任务 -->
+	<bean id="smallthreadPool" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+	    <property name="corePoolSize" value="0" />
+	    <property name="maxPoolSize" value="1" />
+	</bean>
+	    
+	<bean id="jinkuModelMgr" class="com.huawei.ecmAdpater.localImpl.JinkuModelMgrImpl" />
+	<bean id="securityMgr" class="com.huawei.ecmAdpater.localImpl.SecurityMgrImpl" />
+	<bean id="alarmSender" class="com.huawei.ecmAdpater.localImpl.AlarmSenderImpl" />
+	<bean id="commMgr" class="com.huawei.ecmAdpater.localImpl.CommMgrImpl" />
+	<bean id="configMgr" class="com.huawei.ecmAdpater.localImpl.ConfigMgrImpl" />
+	<bean id="licenseMgr" class="com.huawei.ecmAdpater.localImpl.LicenseMgrImpl" />
+	<bean id="operationLogMgr" class="com.huawei.ecmAdpater.localImpl.OperationLogMgrImpl" />
+	<bean id="passwordMgr" class="com.huawei.ecmAdpater.localImpl.PasswordMgrImpl" />
+	<import resource="./seq-validate.xml" />
+
+</beans>

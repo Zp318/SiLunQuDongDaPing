@@ -1,0 +1,10 @@
+.bar_init{
+	width: 100%;
+	height: 2.77rem;
+}
+
+.nodata{
+	font-size: 0.2rem;
+	text-align: center;
+	line-height: 2.77rem;
+}

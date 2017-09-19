@@ -1,0 +1,26 @@
+ /**
+  * [URL配置说明]
+  * @registerSuccessRate: VoLTE注册成功率
+  * @connectRate: VoLTE接通率
+  * @connectDelay: VoLTE接通时延
+  * @srvccSuccessRate: SRVCC切换成功率
+  * @callDropRate: VoLTE掉话率
+  * @mosGoodRate: MOS(大于3.0占比)
+  * @fallbackSuccessRate: CSFB回落成功率
+  * @callTimePercent: Volte通话时长占比
+  * @openSucceccRate: 业务自动开通成功率
+  * @terminalPermeability: Volte终端渗透率
+  */
+
+ window.urlConfig = {
+	registerSuccessRate: "https://10.25.122.70:8443/SF_SC_VOLTE/volteKpiAnalysis/queryRegAnalysis.action",
+	connectRate: "https://10.25.122.70:8443/SF_SC_VOLTE/volteKpiAnalysis/queryAccessAnalysis.action",
+	connectDelay: window.basePath + 'cellQulityAnalysis/initPage.action',
+	srvccSuccessRate: "https://10.25.122.70:8443/SF_SC_VOLTE/volteKpiAnalysis/querySwitchAnalysis.action",
+	callDropRate: "https://10.25.122.70:8443/SF_SC_VOLTE/volteKpiAnalysis/queryDropAnalysis.action",
+	mosGoodRate: "https://10.25.122.70:8443/SF_SC_VOLTE/volteKpiAnalysis/queryMosAnalysis.action",
+	fallbackSuccessRate: "https://10.25.122.70:8443/CSFB_ANALYSIS/templateManageController/getQueryTemplateList.action",
+	callTimePercent: "https://10.25.122.70:8443/SF_VOLTE_CALLDURATION/rankingsAnalysisPages/initPage.action",
+	openSucceccRate: "https://10.25.122.70:8443/CUSTER_AHCMCC_VOLTE_WEB/commonController/query4sql.action",
+	terminalPermeability: "https://10.25.122.70:8443/SF_SC_VOLTE/volteTerminalAnalysis/dataQuery.action"
+}

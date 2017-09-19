@@ -1,0 +1,186 @@
+package com.huawei.sc_mobile_fwd.comm.util;
+
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * 内存缓存类
+ * @param <K> 
+ * @param <V> 
+ * @author zhiyizhao
+ *
+ */
+public class MemoryCache<K, V>
+{
+
+    /**
+     * 缓存后检查清理的延时
+     */
+    private static final long FADE_DELAY_AFTER_CACHE = 5000;
+
+    /**
+     * 数字：3
+     */
+    private static final int THREE = 3;
+
+    /**
+     * 日志记录器
+     */
+    private static Logger logger = LoggerFactory.getLogger(MemoryCache.class);
+    
+    /**
+     * 缓存
+     */
+    private final Map<K, CacheData> cache = new ConcurrentHashMap<K, CacheData>();
+
+
+
+    /**
+     * 清理缓存的线程正在运行的标识
+     * 同一时间只允许一个缓存运行
+     */
+    private boolean isFading = false;
+    
+    /**
+     * 数据的保存时长
+     */
+    private long keep;
+    
+    /**
+     * 最后一次缓存时间
+     */
+    private long lastCache;
+    
+    /**
+     * 最后一次清理的时间
+     */
+    private long lastFade;
+
+    /**
+     * 创建一个内存缓存器
+     * 如果keep不为正数，则不缓存
+     * @param keep 数据的保存时长，单位毫秒
+     */
+    public MemoryCache(long keep)
+    {
+        this.keep = keep > 0 ? keep : 0;
+    }
+    
+    /**
+     * 获取缓存中的数据
+     * @param key key
+     * @return V 
+     */
+    public V get(K key)
+    {
+        CacheData cd = cache.get(key);
+        if (cd == null)
+        {
+            return null;
+        }
+        else if (cd.timestamp + keep < System.currentTimeMillis())
+        {
+            fade();
+            return null;
+        }
+        else
+        {
+            return cd.data;
+        }
+    }
+    
+    /**
+     * 添加缓存
+     * @param key key
+     * @param value value
+     */
+    public void put(K key, V value)
+    {
+        if (keep > 0)
+        {
+            this.lastCache = System.currentTimeMillis();
+            cache.put(key, new CacheData(this.lastCache, value));
+        }
+        fade();
+    }
+    
+    /**
+     * 清理过时缓存
+     */
+    private synchronized void fade()
+    {
+        long now = System.currentTimeMillis();
+        if (now - lastFade < keep / THREE
+                || isFading 
+                || cache.size() == 0)
+        {
+            return;
+        }
+        
+        lastFade = System.currentTimeMillis();
+        new Thread()
+        {
+            {
+                this.setDaemon(true);
+            }
+            @Override
+            public void run()
+            {
+                
+                // 考虑到实际情况通常都会在同一个进程中存入多条数据
+                // 设置一个清理延时
+                long inTime = System.currentTimeMillis();
+                long now = inTime;
+                try
+                {
+                    while (now - lastCache < FADE_DELAY_AFTER_CACHE && now - inTime < keep)
+                    {
+                        Thread.sleep(FADE_DELAY_AFTER_CACHE);
+                        now = System.currentTimeMillis();
+                    }
+                } 
+                catch (InterruptedException e)
+                {
+                    // 防止因意外情况发生导致的缓存无法清除，直接清除所有缓存
+                    cache.clear();
+                    logger.error("[MemoryCache] fade error, all cache cleared");
+                    return;
+                }
+                
+                
+                logger.debug("[MemoryCache] fade start");
+                long fadeTime = System.currentTimeMillis() - keep;
+                for (Entry<K, CacheData> entry : cache.entrySet())
+                {
+                    // 数据保存时间点<=当前时间点-保存时间
+                    if (entry.getValue().timestamp <= fadeTime)
+                    {
+                        cache.remove(entry.getKey());
+                    }
+                }
+                isFading = false;
+            }
+        }.start();
+    }
+    
+    /**
+     * 封装缓存数据与存入的时间戳
+     * @author zhiyizhao
+     *
+     */
+    private class CacheData
+    {
+        private V data;
+        private long timestamp;
+        
+        public CacheData(long timestamp, V data)
+        {
+            this.timestamp = timestamp;
+            this.data = data;
+        }
+    }
+}

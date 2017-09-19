@@ -1,0 +1,6 @@
+{
+    // FileUtils是否缓存文件内容
+    "cache_file_content": true,
+    // MemoryCache初始化参数 - 缓存保存时间，单位秒
+    "memory_cache_keep_time": 1800
+}

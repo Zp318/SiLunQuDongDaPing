@@ -1,0 +1,119 @@
+{
+    // FileUtils是否缓存文件内容
+    "cache_file_content": true,
+    // MemoryCache初始化参数 - 缓存保存时间，单位秒
+    "memory_cache_keep_time": 1800,
+    "terminal_brand" : {
+        "APPLE" : "苹果",
+        "XIAOMI" : "小米",
+        "MI" : "小米",
+        "HUAWEI" : "华为",
+        "SAMSUNG" : "三星",
+        "LENOVO" : "联想",
+        "HONOR" : "荣耀",
+        "COOLPAD" : "酷派",
+        "MEIZU" : "魅族",
+        "MEIZU MX" : "魅族MX",
+        "ZTE" : "中兴",
+        "HISENSE" : "海信",
+        "GIONEE" : "金立",
+        "ZHI LING TONG" : "智灵通",
+        "BLACKBERRY" : "黑莓",
+        "NOKIA" : "诺基亚",
+        "BIFER" : "贝尔丰",
+        "LEPHONE" : "乐视",
+        "WELLPHONE" : "沃普丰",
+        "SKYHON" : "天宏",
+        "CHANGHONG" : "长虹",
+        "BASICOM" : "宝捷讯"},
+    //查询地图展示小区数
+    "cell_num_map":10,
+    //查询地图界面表格展示小区数
+    "cell_num_table":20,
+    //导出地图界面表格数据
+    "cell_num_export":100000,
+    // 业务质量监控页面质差阈值
+    "monitor_threshold" : {
+        "SF_EPS_COMBINED_ATTACH_SUCC_RATE" : {
+                "kqiName":"EPS联合附着率",
+                "kqiFilterModelName":"EPS联合附着请求次数",
+                "kqiFilterModelId":"SF_SC_VOLTE_GRP_SF_EPS_ATTACH_REQ_TIMES",
+                "kqiFilterModelThreshold":"40",
+                "kqiFilterModelOperator":">",
+                "kqiCellDegradationThreshold":"95",
+                "kqiCellDegradationOperator":"<"
+            },
+        "SF_VOLTE_REGISTER_SUCC_RATE" : {
+                "kqiName":"注册成功率",
+                "kqiFilterModelName":"初始注册请求次数",
+                "kqiFilterModelId":"SF_SC_VOLTE_GRP_SF_IMS_INITIAL_REGISITER_REQ_TIMES",
+                "kqiFilterModelThreshold":"40",
+                "kqiFilterModelOperator":">",
+                "kqiCellDegradationThreshold":"95.5",
+                "kqiCellDegradationOperator":"<"
+            },
+        "SF_SV_ESRVCC_DELAY_LTE2CS" : {
+                "kqiName":"ESRVCC切换时延",
+                "kqiFilterModelName":"Sv SRVCC切换请求次数",
+                "kqiFilterModelId":"SF_SC_VOLTE_GRP_SF_SV_CHANGE_REQ_TIMES",
+                "kqiFilterModelThreshold":"20",
+                "kqiFilterModelOperator":">",
+                "kqiCellDegradationThreshold":"1600",
+                "kqiCellDegradationOperator":">"
+            },
+        "SF_SV_ESRVCC_SUCC_RATE" : {
+                "kqiName":"ESRVCC切换成功率",
+                "kqiFilterModelName":"Sv SRVCC切换请求次数",
+                "kqiFilterModelId":"SF_SC_VOLTE_GRP_SF_SV_CHANGE_REQ_TIMES",
+                "kqiFilterModelThreshold":"20",
+                "kqiFilterModelOperator":">",
+                "kqiCellDegradationThreshold":"92",
+                "kqiCellDegradationOperator":"<"
+            },
+        "SF_VOLTE_CALL_DROP_RATE" : {
+                "kqiName":"VOLTE掉话率",
+                "kqiFilterModelName":"VOLTE呼叫应答次数",
+                "kqiFilterModelId":"SF_SC_VOLTE_GRP_SF_VOLTE_CALL_ANSWER_TIMES",
+                "kqiFilterModelThreshold":"40",
+                "kqiFilterModelOperator":">",
+                "kqiCellDegradationThreshold":"0.1",
+                "kqiCellDegradationOperator":">"
+            },
+        "SF_VOLTE_CONNECT_DELAY_LTE2LTE" : {
+                "kqiName":"Volte呼叫建立时延",
+                "kqiFilterModelName":"VoLTE2VoLTE始呼接通次数",
+                "kqiFilterModelId":"SF_SC_VOLTE_GRP_SF_VOLTE_MOC_ALERT_TIMES",
+                "kqiFilterModelThreshold":"20",
+                "kqiFilterModelOperator":">",
+                "kqiCellDegradationThreshold":"4000",
+                "kqiCellDegradationOperator":">"
+            },
+        "SF_VOLTE_CONNECT_RATE" : {
+                "kqiName":"VoLTE呼叫接通率",
+                "kqiFilterModelName":"VoLTE呼叫请求次数",
+                "kqiFilterModelId":"SF_SC_VOLTE_GRP_SF_VOLTE_CONNECT_REQ_TIMES",
+                "kqiFilterModelThreshold":"20",
+                "kqiFilterModelOperator":">",
+                "kqiCellDegradationThreshold":"97.5",
+                "kqiCellDegradationOperator":"<"
+            },
+        "SF_UL_MOS" : {
+                "kqiName":"上行MOS值",
+                "kqiFilterModelName":"VOLTE上行RTCP有效语音流数",
+                "kqiFilterModelId":"SF_SC_VOLTE_GRP_SF_VOTLE_UL_RTCP_VALID_FLOWS",
+                "kqiFilterModelThreshold":"20",
+                "kqiFilterModelOperator":">",
+                "kqiCellDegradationThreshold":"4.25",
+                "kqiCellDegradationOperator":"<"
+            },
+        "SF_DL_MOS" : {
+                "kqiName":"下行MOS值",
+                "kqiFilterModelName":"VOLTE下行RTCP有效语音流数",
+                "kqiFilterModelId":"SF_SC_VOLTE_GRP_SF_VOTLE_DW_RTCP_VALID_FLOWS",
+                "kqiFilterModelThreshold":"20",
+                "kqiFilterModelOperator":">",
+                "kqiCellDegradationThreshold":"4.22",
+                "kqiCellDegradationOperator":"<"
+            }
+        }
+}

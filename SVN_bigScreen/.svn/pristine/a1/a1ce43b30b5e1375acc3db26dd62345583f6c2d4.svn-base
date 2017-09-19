@@ -1,0 +1,89 @@
+export const barLineOption={
+	color: ["#54bef2" , "#3dcce4","#09899e"],
+	tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+            type: 'shadow'
+        },
+        formatter:'Time:{b}<br />{a0}:{c0}<br />{a1}:{c1}<br />{a2}:{c2}%'
+    },
+    legend: {
+    	top:'3%',
+    	right:'70px',
+        data: []
+    },
+    grid: {
+        left: '0%',
+        right: '0%',
+        bottom: '5%',
+        top: '16%',
+        containLabel: true,
+        borderColor:"#D1D9E2"
+    },
+    xAxis : [
+    	{
+            type : 'category',
+            data : [],
+            axisLine:{
+            	lineStyle:{
+            		color:"#4E545D"
+            	}
+            },
+            axisTick:{
+            	show:false
+            },
+            axisLabel:{
+            	interval:0,
+            	textStyle:{
+            		color:"#4E545D",
+            		fontSize:12
+            	}
+            }
+        }
+    ],
+    yAxis:[
+        {
+            type : 'value',
+            nameGap:5,
+           
+            axisLine:{
+            	lineStyle:{
+            		color:"#4E545D"
+            	}
+            },
+            axisTick:{
+            	show:false
+            },
+            axisLabel:{
+            	textStyle:{
+            		color:"#4E545D"
+            	}
+            }
+        },
+        {
+            type : 'value',
+            nameGap:5,
+            max:100,
+            splitLine:{
+            	show:false
+            },
+            axisLine:{
+            	lineStyle:{
+            		color:"#4E545D"
+            	}
+            },
+            axisTick:{
+            	show:false
+            },
+            axisLabel:{
+               textStyle:{
+                color:"#4E545D"
+               },
+               formatter:"{value}%",
+               showMaxLabel:true,
+               showMinLabel:true
+            }
+        }
+    ],
+    series:[]
+}

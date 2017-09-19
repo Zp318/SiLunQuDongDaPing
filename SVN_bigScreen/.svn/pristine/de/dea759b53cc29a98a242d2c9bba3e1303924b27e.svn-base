@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+	http://www.springframework.org/schema/security
+	http://www.springframework.org/schema/security/spring-security-4.0.xsd">
+		 
+	<http entry-point-ref="ecm-sm-ProcessingFilterEntryPoint">
+		<custom-filter position="FIRST" ref="cookieFilter" />
+		<custom-filter after="FORM_LOGIN_FILTER" ref="ecm-sm-ProcessingFilter" />
+		<custom-filter before="FILTER_SECURITY_INTERCEPTOR" ref="ecm-sm-AccessFilter"  />
+		<custom-filter position="LAST" ref="paramCheckFilter"/>
+		<custom-filter before="CSRF_FILTER" ref="dosfilter" />
+		<custom-filter after="CSRF_FILTER" ref="headerfilter" />
+		<access-denied-handler error-page="/pages/common/403.jsp"/>
+		<csrf disabled="false" request-matcher-ref="csrfmatcher"/>
+		<headers><frame-options policy="SAMEORIGIN"/></headers>
+		<session-management session-fixation-protection="migrateSession" />
+	</http>
+	
+	<!-- Spring Bean 工具类 -->
+	<beans:bean id="ecm-springContextUtil" class="com.ecm.security.core.common.SpringContextUtil"/>
+	
+	<!--配置CSRF-->
+	<beans:bean id="csrfmatcher" init-method="init" class="com.ecm.security.core.common.EcmCsrfPathRequestMatcher">
+		<beans:constructor-arg index="0">
+			<beans:map>
+				<beans:entry key="/service/main/index" value="GET"/>
+                <beans:entry key="/j_spring_cas_security_check" value="GET"/>
+                <beans:entry key="/login/cas" value="GET"/>
+				<beans:entry key="/service/sec/core/res/refreshSession" value="POST"/>
+				<beans:entry key="/service/sec/core/lockScreen/add" value="POST"/>
+				<beans:entry key="/service/sec/core/lockScreen/delete" value="POST"/>
+                <beans:entry key="/ws/**" value="GET|POST"/>
+                <beans:entry key="/south/**" value="GET|POST"/>
+                <beans:entry key="/webservice/**" value="GET|POST"/>
+                <beans:entry key="/**/*.bmp" value="GET"/>
+                <beans:entry key="/**/*.gif" value="GET"/>
+                <beans:entry key="/**/*.jpg" value="GET"/>
+                <beans:entry key="/**/*.jpeg" value="GET"/>
+                <beans:entry key="/**/*.png" value="GET"/>
+                <beans:entry key="/**/*.PNG" value="GET"/>
+                <beans:entry key="/**/*.js" value="GET"/>
+                <beans:entry key="/**/*.css" value="GET"/>
+                <beans:entry key="/**/*.htm" value="GET"/>
+                <beans:entry key="/**/*.html" value="GET"/>
+				<beans:entry key="/export/downloadExportFile.action" value="GET"/>
+			</beans:map>
+		</beans:constructor-arg>
+		<beans:property name="webSvrSecResDao" ref="ecm-sm-webSvrSecResDao" />
+	</beans:bean>
+	
+	<!--配置参数校验-->
+	<beans:bean id="paramCheckFilter" class="com.huawei.security.validator.filter.ParamCheckFilter">
+	</beans:bean>
+	
+	<!--配置DOS攻击-->
+	<beans:bean id="dosfilter" class="com.huawei.springframework.security.web.dos.SpringDosPrecautionFilter">
+		<beans:constructor-arg ref="dosstatisticsprocess"/>
+		<beans:constructor-arg ref="dosconfig"/>
+		<!--配置DOS攻击后的处理-->
+		<beans:property name="accessDeniedHandler" ref="commonDOSErrorHandler"/>
+	</beans:bean>
+	<beans:bean id="dosstatisticsrepository" class="com.huawei.springframework.security.web.dos.HttpSessoionDosStatisticsRepository"/>
+	<beans:bean id="dosstatisticsprocess" class="com.huawei.springframework.security.web.dos.DosStatisticsProcess">
+		<beans:constructor-arg ref="dosstatisticsrepository"/>
+		<beans:constructor-arg ref="dosconfig"/>
+	</beans:bean>
+	<!--配置DOS攻击频率-->
+	<beans:bean id="dosconfig" class="com.huawei.springframework.security.web.dos.DosConfig">
+		<beans:property name="hits" value="1000"/>
+		<beans:property name="period" value="5"/>
+	</beans:bean>
+	<!--配置DOS攻击后的处理类-->
+	<beans:bean id="commonDOSErrorHandler" class="com.ecm.security.core.common.CommonDOSErrorHandler">
+		<beans:property name="webSvrSecurity" ref="ecm-sm-webSvrSecurity"/>
+	</beans:bean>
+	
+	<!--Cookie配置-->
+	<beans:bean id="cookieFilter" class="com.huawei.springframework.security.web.cookie.CookieFilter">
+		<beans:property name="httponlyWhiteList">
+			<beans:map>
+			</beans:map>
+		</beans:property>
+		<beans:property name="secure">
+			<beans:value>true</beans:value>
+		</beans:property>
+	</beans:bean>
+	
+	<!-- 请求头校验 -->
+	<beans:bean id="headerfilter" class="com.huawei.springframework.security.header.readers.HeaderReaderFilter">
+		<beans:constructor-arg index="0" ref="headerReader"/>
+	</beans:bean>
+	<beans:bean id="headerReader" class="com.huawei.springframework.security.header.readers.MutipleHeaderReader">
+		<beans:constructor-arg>
+			<beans:list>
+				<beans:ref bean="header-host"/>
+				<beans:ref bean="header-user-agent"/>
+				<beans:ref bean="header-accept"/>
+				<beans:ref bean="header-accept-language"/>
+				<beans:ref bean="header-accept-encoding"/>
+				<beans:ref bean="header-x-csrf-token"/>
+				<beans:ref bean="header-content-type"/>
+				<beans:ref bean="header-x-requested-with"/>
+				<beans:ref bean="header-referer"/>
+				<beans:ref bean="header-pragma"/>
+				<beans:ref bean="header-cache-control"/>
+				<beans:ref bean="header-x-forwarded-for"/>
+				<beans:ref bean="header-x-forwarded-host"/>
+				<beans:ref bean="header-x-forwarded-server"/>
+				<beans:ref bean="header-connection"/>
+				<beans:ref bean="header-content-length"/>
+				<beans:ref bean="header-cookie"/>
+			</beans:list>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-host" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="host"/> 
+				<beans:property name="pattern" value="^((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]))(:([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]))?$"/>
+				<beans:property name="blackListCheck" value="false"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-user-agent" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="user-agent"/> 
+				<beans:property name="pattern" value="(.*&amp;amp;.*)|(.*&amp;lt;.*)|(.*&amp;gt;.*)|(.*&amp;apos;.*)|(.*&amp;quot;.*)|(.*[&amp;&lt;&gt;&apos;&quot;\\%].*)"/>
+				<beans:property name="blackListCheck" value="true"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-accept" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="accept"/> 
+				<beans:property name="pattern" value="(.*&amp;amp;.*)|(.*&amp;lt;.*)|(.*&amp;gt;.*)|(.*&amp;apos;.*)|(.*&amp;quot;.*)|(.*[&amp;&lt;&gt;&apos;&quot;\\%()].*)"/>
+				<beans:property name="blackListCheck" value="true"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-accept-language" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="accept-language"/> 
+				<beans:property name="pattern" value="(.*&amp;amp;.*)|(.*&amp;lt;.*)|(.*&amp;gt;.*)|(.*&amp;apos;.*)|(.*&amp;quot;.*)|(.*[&amp;&lt;&gt;&apos;&quot;/\\%()].*)"/>
+				<beans:property name="blackListCheck" value="true"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-accept-encoding" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="accept-encoding"/> 
+				<beans:property name="pattern" value="(.*&amp;amp;.*)|(.*&amp;lt;.*)|(.*&amp;gt;.*)|(.*&amp;apos;.*)|(.*&amp;quot;.*)|(.*[&amp;&lt;&gt;&apos;&quot;/\\%()].*)"/>
+				<beans:property name="blackListCheck" value="true"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-x-csrf-token" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="x-csrf-token"/> 
+				<beans:property name="pattern" value="^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"/>
+				<beans:property name="blackListCheck" value="false"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-content-type" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="content-type"/> 
+				<beans:property name="pattern" value="(.*&amp;amp;.*)|(.*&amp;lt;.*)|(.*&amp;gt;.*)|(.*&amp;apos;.*)|(.*&amp;quot;.*)|(.*[&amp;&lt;&gt;&apos;&quot;\\%()].*)"/>
+				<beans:property name="blackListCheck" value="true"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-x-requested-with" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="x-requested-with"/> 
+				<beans:property name="pattern" value="(.*&amp;amp;.*)|(.*&amp;lt;.*)|(.*&amp;gt;.*)|(.*&amp;apos;.*)|(.*&amp;quot;.*)|(.*[&amp;&lt;&gt;&apos;&quot;\\%()].*)"/>
+				<beans:property name="blackListCheck" value="true"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-referer" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="referer"/>
+				<beans:property name="pattern" value="(.*&amp;amp;.*)|(.*&amp;lt;.*)|(.*&amp;gt;.*)|(.*[&lt;&gt;\\].*)"/>
+				<beans:property name="blackListCheck" value="true"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-pragma" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="pragma"/> 
+				<beans:property name="pattern" value="(.*&amp;amp;.*)|(.*&amp;lt;.*)|(.*&amp;gt;.*)|(.*&amp;apos;.*)|(.*&amp;quot;.*)|(.*[&amp;&lt;&gt;&apos;&quot;/\\%()].*)"/>
+				<beans:property name="blackListCheck" value="true"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-cache-control" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="cache-control"/> 
+				<beans:property name="pattern" value="(.*&amp;amp;.*)|(.*&amp;lt;.*)|(.*&amp;gt;.*)|(.*&amp;apos;.*)|(.*&amp;quot;.*)|(.*[&amp;&lt;&gt;&apos;&quot;/\\%()].*)"/>
+				<beans:property name="blackListCheck" value="true"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-x-forwarded-for" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="x-forwarded-for"/> 
+				<beans:property name="pattern" value="^(((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])))(\s?,\s?(((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]))))*$"/>
+				<beans:property name="blackListCheck" value="false"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-x-forwarded-host" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="x-forwarded-host"/> 
+				<beans:property name="pattern" value="^(((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]))(:([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]))?)(\s?,\s?(((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]))(:([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]))?))*$"/>
+				<beans:property name="blackListCheck" value="false"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-x-forwarded-server" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="x-forwarded-server"/> 
+				<beans:property name="pattern" value="^(((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])))(\s?,\s?(((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]))))*$"/>
+				<beans:property name="blackListCheck" value="false"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-connection" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="connection"/> 
+				<beans:property name="pattern" value="(.*&amp;amp;.*)|(.*&amp;lt;.*)|(.*&amp;gt;.*)|(.*&amp;apos;.*)|(.*&amp;quot;.*)|(.*[&amp;&lt;&gt;&apos;&quot;/\\%()].*)"/>
+				<beans:property name="blackListCheck" value="true"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-content-length" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="content-length"/> 
+				<beans:property name="pattern" value="^\d*$"/>
+				<beans:property name="blackListCheck" value="false"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+	<beans:bean id="header-cookie" class="com.huawei.springframework.security.header.readers.DelegatingRequestMatcherHeaderReader">
+		<beans:constructor-arg>
+			<beans:bean
+				class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+				<beans:constructor-arg type="java.lang.String">
+					<beans:value>/**</beans:value>
+				</beans:constructor-arg>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg>
+			<beans:bean class="com.huawei.springframework.security.header.readers.RequestMatcherHeaderCheckReader">
+				<beans:property name="header" value="cookie"/> 
+				<beans:property name="pattern" value="(.*&amp;amp;.*)|(.*&amp;lt;.*)|(.*&amp;gt;.*)|(.*&amp;apos;.*)|(.*&amp;quot;.*)|(.*[&amp;&lt;&gt;&apos;&quot;/\\()].*)"/>
+				<beans:property name="blackListCheck" value="true"/>
+			</beans:bean>
+		</beans:constructor-arg>
+	</beans:bean>
+
+	<!--配置文件上传-->
+	<beans:bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<beans:property name="defaultEncoding" value="UTF-8"/>
+		<beans:property name="maxUploadSize" value="104857600" />
+	</beans:bean>
+
+	<!--实现用户认证的入口，获取用户信息 -->
+	<beans:bean id="ecm-sm-userDetailsService" class="com.ecm.security.core.authentication.EcmUserDetailsService">
+		<beans:property name="restTemplate" ref="restTemplate" />
+	</beans:bean>
+	
+	<!--系统访问URL资源查询类-->
+	<beans:bean id="ecm-sm-webSvrSecResDao" class="com.ecm.security.core.res.dao.WebSvrSecResDaoImpl">
+		<beans:property name="dataSource" ref="dataSource" />
+	</beans:bean>
+	
+	<!--系统访问URL资源查询类-->
+	<beans:bean id="ecm-sm-webSvrSecResMgr" init-method="initialize" class="com.ecm.security.core.res.dao.WebSvrSecResMgrImpl">
+		<beans:property name="webSvrSecResDao" ref="ecm-sm-webSvrSecResDao" />
+		<beans:property name="webSvrSecurity" ref="ecm-sm-webSvrSecurity"/>
+		<beans:property name="restTemplate" ref="restTemplate" />
+		<beans:property name="userDetailsService" ref="ecm-sm-userDetailsService"/>
+	</beans:bean>
+	
+	<!--系统对外接口bean-->
+    <beans:bean id="ecm-sm-webSvrSecurity" class="com.ecm.security.core.common.WebSvrSecurityImpl">
+    	<beans:property name="restTemplate" ref="restTemplate" />
+    	<beans:property name="webSvrSecResMgr" ref="ecm-sm-webSvrSecResMgr" />
+    </beans:bean>
+    
+	<!--系统对外接口bean-->
+    <beans:bean id="ecm-sm-openMenuOperationLogMgr" class="com.ecm.security.core.common.OpenMenuOperationLogMgrImpl">
+		<beans:property name="webSvrSecResMgr" ref="ecm-sm-webSvrSecResMgr" />
+		<beans:property name="webSvrSecurity" ref="ecm-sm-webSvrSecurity"/>
+    </beans:bean>
+	
+	<!--自定义的filter,对访问URL进行权限过滤 -->  
+	<beans:bean id="ecm-sm-AccessFilter" class="com.ecm.security.core.authentication.AuthFilterSecurityInterceptor">
+		<!--访问决策器，决定某个用户具有的角色，是否有足够的权限去访问某个资源 -->  
+		<beans:property name="authenticationManager" ref="ecm-sm-authenticationManager" />	
+		<beans:property name="accessDecisionManager" ref="ecm-sm-AccessDecisionManager" />  
+		<beans:property name="securityMetadataSource" ref="ecm-sm-SecurityMetadataSource" />  
+	</beans:bean>
+	
+	<beans:bean id="ecm-sm-AccessDecisionManager" init-method="init" class="com.ecm.security.core.authentication.EcmAccessDecisionManager">  
+	    <!-- 不进行鉴权的请求前缀，以“,”隔开 -->
+	    <beans:property name="ignoreReq" value="ws,south,webservice,workOrderProcess" />
+	    <beans:property name="ignoreReqSuffix" value="bmp,gif,jpg,jpeg,png,js,css" />
+	    <beans:property name="userDetailsService" ref="ecm-sm-userDetailsService"/>
+        <beans:property name="webSvrSecurity" ref="ecm-sm-webSvrSecurity"/>
+        <beans:property name="openMenuOperationLogMgr" ref="ecm-sm-openMenuOperationLogMgr"/>
+	</beans:bean>
+	
+	<!-- 资源源数据定义，将所有的资源和权限对应关系建立起来，即定义某一资源可以被哪些角色访问     -->  
+	<beans:bean id="ecm-sm-SecurityMetadataSource" class="com.ecm.security.core.authentication.EcmSecurityMetadataSource">
+		<beans:property name="webSvrSecResMgr" ref="ecm-sm-webSvrSecResMgr" />  
+	</beans:bean>
+	
+	<!--spring security集成sso cas配置信息-->
+	<authentication-manager alias="ecm-sm-authenticationManager">
+		<authentication-provider ref="ecm-sm-AuthenticationProvider" />
+	</authentication-manager>
+
+	<beans:bean id="ecm-sm-ProcessingFilter" class="org.springframework.security.cas.web.CasAuthenticationFilter">
+		<beans:property name="authenticationManager" ref="ecm-sm-authenticationManager" />
+	</beans:bean>
+
+	<beans:bean id="ecm-sm-ProcessingFilterEntryPoint" class="com.ecm.security.core.cas.EcmCasAuthenticationEntryPoint">
+		<beans:property name="serviceProperties" ref="ecm-sm-ServiceProperties" />
+	</beans:bean>
+
+	<beans:bean id="ecm-sm-ServiceProperties" class="com.ecm.security.core.cas.EcmServiceProperties">
+		<beans:property name="sendRenew" value="false" />
+	</beans:bean>
+
+	<beans:bean id="ecm-sm-AuthenticationProvider" class="org.springframework.security.cas.authentication.CasAuthenticationProvider">
+		<beans:property name="userDetailsService" ref="ecm-sm-userDetailsService" />
+		<beans:property name="serviceProperties" ref="ecm-sm-ServiceProperties" />
+		<beans:property name="ticketValidator">
+			<beans:bean class="com.ecm.security.core.cas.EcmCas20ServiceTicketValidator">
+				<beans:property name="encoding" value="UTF-8" />
+			</beans:bean>
+		</beans:property>
+		<beans:property name="key" value="webappname" />
+	</beans:bean>
+</beans:beans>

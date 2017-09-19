@@ -1,0 +1,297 @@
+/*
+*created by zhangpeng at 2017-05-16
+*生成echarts图表组件：
+*初始化渲染、定时刷新、点击跳转
+ */
+
+import React, { Component } from 'react';
+import './BarComponentStyle.css';
+import urls from '../../urls/urls';
+import $ from "jquery"; 
+import echarts from 'echarts';
+
+class BarComponent extends Component {
+	componentDidMount(){
+		const me = this;
+		var idArray = [];
+		var minY = 90;
+		var ele = echarts.init(document.getElementsByClassName("bar_init")[me.props.initIndex]);
+		/*
+		*echartsRender函数：
+		*用作echarts图表初始化渲染
+		 */
+		var echartsRender = function(){
+			$.ajax({
+				type:"POST",
+				url:urls.indicators,
+				dataType:"json",
+				headers:{
+					'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+					"X-CSRF-TOKEN":$("meta[name='_csrf']").attr("content")
+				},
+				data:me.props.initIndex==1 ? {indicators:[me.props.dataone,me.props.datatwo]} : {indicators:[me.props.dataone]}
+			}).done(function(res){
+				if(res.code == "200"){
+					/*
+					*xAxisData——X轴数组
+					*seriesOne——左轴数组
+					*seriesTwo——右轴数组
+					 */
+					var xAxisData=[];
+					var seriesOne=[];
+					var seriesTwo=[];
+					for(var i=0;i<res.data[0].data.length;i++){
+						xAxisData.push(res.data[0].data[i].name);
+						seriesOne.push(res.data[0].data[i].value);
+						idArray.push(res.data[0].data[i].id)
+					}
+					if(res.data.length > 1){
+						for(var i=0;i<res.data[1].data.length;i++){
+							seriesTwo.push(res.data[1].data[i].value);
+						}
+					}
+
+					// 求左轴的最小值
+					minY = seriesOne[0];
+					for(var i=1;i<seriesOne.length;i++){
+						if(seriesOne[i]<minY){
+							minY = seriesOne[i];
+						}
+					}
+
+					//图表配置项 
+					var option ={
+						color: ["#3DCCE4" , "#2B9CD4"],
+						tooltip : {
+							show:true,
+					        trigger:res.data.length > 1 ? 'axis' : "item",
+					        confine:true,
+					        formatter: res.data.length > 1 ? '{b}<br />{a0} : {c0}%<br />{a1} : {c1}ms' : '{b}<br />{a0} : {c0}%'
+					    },
+					    grid: {
+					        left: '4%',
+					        right: '3%',
+					        bottom: '5%',
+					        top: '10%',
+					        containLabel: true,
+					        borderColor:"#D1D9E2"
+					    },
+					    xAxis : [
+				        	{
+					            type : 'category',
+					            data : xAxisData,
+					            axisLine:{
+					            	lineStyle:{
+					            		color:"#4E545D"
+					            	}
+					            },
+					            axisTick:{
+					            	show:false
+					            },
+					            axisLabel:{
+					            	interval:0,
+					            	textStyle:{
+					            		color:"#4E545D",
+					            		fontSize:12
+					            	}
+					            }
+					        }
+					    ],
+					    yAxis : res.data.length > 1 ? [
+					        {
+					            type : 'value',
+					            name:res.data[0].unit,
+					            nameGap:5,
+					            max:100,
+					            min:minY < 90 ? (parseInt(minY)-5) : 90,
+					            axisLine:{
+					            	lineStyle:{
+					            		color:"#4E545D"
+					            	}
+					            },
+					            axisTick:{
+					            	show:false
+					            },
+					            axisLabel:{
+					            	textStyle:{
+					            		color:"#4E545D"
+					            	}
+					            }
+					        },
+					        {
+					            type : 'value',
+					            name:res.data[1].unit,
+					            nameGap:5,
+					            splitLine:{
+					            	show:false
+					            },
+					            axisLine:{
+					            	lineStyle:{
+					            		color:"#4E545D"
+					            	}
+					            },
+					            axisTick:{
+					            	show:false
+					            },
+					            axisLabel:{
+					            	textStyle:{
+					            		color:"#4E545D"
+					            	}
+					            }
+					        }
+					    ] : [
+					    	{
+					            type : 'value',
+					            name:res.data[0].unit,
+					            nameGap:5,
+					            max:res.data[0].legend == "SF_VOLTE_CALL_DROP_RATE_1" ? 0.12 : 100,
+					            min:(function(){
+					            	if(res.data[0].legend == "SF_VOLTE_CALL_DROP_RATE_1"){
+					            		return 0
+					            	}else if(minY < 90){
+					            		return parseInt(minY)-5
+					            	}else{
+					            		return 90
+					            	}
+					            }()),
+					            axisLine:{
+					            	lineStyle:{
+					            		color:"#4E545D"
+					            	}
+					            },
+					            axisTick:{
+					            	show:false
+					            },
+					            axisLabel:{
+					            	textStyle:{
+					            		color:"#4E545D"
+					            	}
+					            }
+					        }
+					    ],
+					    series: res.data.length > 1 ? [
+					    	{
+					            name:res.data[0].legend,
+					            yAxisIndex:0,
+					            type:'bar',
+					            data:seriesOne,
+					            itemStyle:{
+					            	normal:{
+					            		barBorderRadius: 20
+					            	},
+					            	emphasis:{
+					            		color:"#FF6878"
+					            	}
+					            },
+					            barMaxWidth:22
+					        },
+					        {
+					            name:res.data[1].legend,
+					            type:'line',
+					            yAxisIndex:1,
+					            data:seriesTwo,
+					            symbol:"circle",
+					            symbolSize:7
+					        }
+					    ] : [
+					    	{
+					            name:res.data[0].legend,
+					            type:'bar',
+					            data:res.data[0].data,
+					            itemStyle:{
+					            	normal:{
+					            		barBorderRadius: 20
+					            	},
+					            	emphasis:{
+					            		color:"#FF6878"
+					            	}
+					            },
+					            barMaxWidth:22
+					        }
+					    ]
+					}
+					ele.setOption(option);
+				}else{
+					// 请求成功，code != 200,显示“NoData”
+					$(".bar_init").text("No Data");
+					$(".bar_init").addClass("nodata");
+				}
+			}).fail(function(err){
+				// 请求失败,显示“NoData”
+				$(".bar_init").text("No Data");
+				$(".bar_init").addClass("nodata");
+			});
+		}
+
+		// 初始化渲染
+		echartsRender();
+
+		// 窗口大小变化时图表自适应
+		window.addEventListener("resize",function(){
+			ele.resize();
+		});	
+
+		// 15分钟定时刷新
+		setInterval(function(){
+			echartsRender();
+		},900000);	
+
+		// 点击柱状图或趋势图
+		ele.on("click",(e) => {
+			/*
+			*myKey——下钻tabKey值
+			*regionid——地市ID
+			 */
+			var myKey;
+			if(e.seriesType === "bar" && e.seriesName != "CSFB_FALLBACK_SUCCESS_RATE"){
+				myKey = me.props.drillKey;
+			}else if(e.seriesType === "line"){
+
+			}else if(e.seriesName === "CSFB_FALLBACK_SUCCESS_RATE"){
+
+			}
+			let regionid = idArray[e.dataIndex];
+			let params="?areaDim=" + regionid + "&timeDim=3600" + "&tabKey=" + myKey;
+			
+			/*
+			*跳转函数toUrl
+			*@url：下钻的url路径
+			 */
+			
+			var toUrl = function(url){
+				if(top.showTabPanel && $.type( top.showTabPanel ) === "function"){
+					top.showTabPanel("客户感知",params.replace(/[^\w]/gi,""),url+params);
+				}else{
+					window.open(url + params);
+				}
+			}
+
+			// 点击图表下钻到对应页面
+			if(e.seriesType === "bar" && e.seriesName === "SF_VOLTE_REGISTER_SUCC_RATE_1"){
+				toUrl(urls.registerSuccessRate);
+			}else if(e.seriesType === "bar" && e.seriesName === "SF_VOLTE_CONNECT_RATE_1"){
+				toUrl(urls.connectRate);
+			}else if(e.seriesType === "line" && e.seriesName === "VOICE_MO_ALERT_AVG_DELAY"){
+				toUrl(urls.connectDelay);
+			}else if(e.seriesType === "bar" && e.seriesName === "SF_SV_ESRVCC_SUCC_RATE_1"){
+				toUrl(urls.srvccSuccessRate);
+			}else if(e.seriesType === "bar" && e.seriesName === "SF_VOLTE_CALL_DROP_RATE_1"){
+				toUrl(urls.callDropRate);
+			}else if(e.seriesType === "bar" && e.seriesName === "SF_VOLTE_MOS_GOOD_RATE"){
+				toUrl(urls.mosGoodRate);
+			}else if(e.seriesType === "bar" && e.seriesName === "CSFB_FALLBACK_SUCCESS_RATE"){
+				toUrl(urls.fallbackSuccessRate);
+			}
+		})	
+	}
+
+	render() {
+	    return (
+	      <div className="bar_init">
+	       	
+	      </div>
+	    );
+	}
+}
+
+export default BarComponent;

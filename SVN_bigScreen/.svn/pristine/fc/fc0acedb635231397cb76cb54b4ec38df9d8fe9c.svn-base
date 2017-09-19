@@ -1,0 +1,240 @@
+package com.huawei.sc_mobile_fwd.pages.service.impl;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import com.huawei.sc_mobile_fwd.pages.constants.Constants;
+import com.huawei.sc_mobile_fwd.pages.dao.IndicatorQueryDao;
+import com.huawei.sc_mobile_fwd.pages.model.Indicator;
+import com.huawei.sc_mobile_fwd.pages.model.ResponseObj;
+import com.huawei.sc_mobile_fwd.pages.service.IndicatorQueryService;
+import com.huawei.sc_mobile_fwd.pages.utils.CommonUtils;
+import com.huawei.sc_mobile_fwd.pages.utils.DateUtils;
+import com.huawei.sc_mobile_fwd.pages.utils.IndicatorManager;
+
+/**
+ * 指标查询服务实现类
+ * @author SF2011 2017年5月16日
+ */
+@Service
+public class IndicatorQueryServiceImpl implements IndicatorQueryService
+{
+    /**
+     * 日志器
+     */
+    private static final Logger logger = LoggerFactory.getLogger(IndicatorQueryServiceImpl.class);
+	
+    /**
+     * 持久层接口
+     */
+    @Autowired
+    private IndicatorQueryDao indicatorQueryDao;
+    
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public ResponseObj queryIndicators(List<String> indicators)
+	{
+		logger.info("[sc_mobile_fwd]: IndicatorQueryServiceImpl.queryIndicators begin.Indicators={}", indicators);
+		if (indicators == null || indicators.size() == 0)
+		{
+			return new ResponseObj(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+		}
+		//指标归属哪个页面
+		String location = IndicatorManager.instance().getIndicatorLocation(indicators);
+		if (StringUtils.isEmpty(location))
+		{
+			return new ResponseObj(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+		}
+		//时间集合
+		Map<String, String> timestampMap = new HashMap<String, String>();
+		//指标数据
+		List<Object> datas = new ArrayList<Object>();
+		//客户感知类指标
+		if (Constants.CUSTOMER_PERCEPTION.equalsIgnoreCase(location))
+		{
+			timestampMap = getLastHourTimestampMap();
+			datas = queryCustomerPerceptionIndicatorData(timestampMap, indicators);
+		}
+		//支撑市场类指标 
+		else if (Constants.MARKET_SUPPORT.equalsIgnoreCase(location))
+		{
+			timestampMap = getLastDayTimestampMap();
+			datas = queryMarketSupportIndicatorData(timestampMap, indicators);
+		}
+		ResponseObj responseObj = buildResponseObj(timestampMap, datas);
+		logger.info("[sc_mobile_fwd]: IndicatorQueryServiceImpl.queryIndicators end.ResponseObj={}", responseObj);
+		return responseObj;
+	}
+
+	/***
+	 * 组装响应对象
+	 */
+	private ResponseObj buildResponseObj(Map<String, String> timestampMap, List<Object> datas)
+	{
+		ResponseObj responseObj = new ResponseObj();
+		responseObj.setStarttime(Long.valueOf(timestampMap.get("START_TIME")));
+		responseObj.setEndtime(Long.valueOf(timestampMap.get("END_TIME")));
+		responseObj.setData(datas);
+		return responseObj;
+	}
+
+	/**
+	 * 查询客户感知类指标数据 
+	 */
+	private List<Object> queryCustomerPerceptionIndicatorData(Map<String, String> timestampMap, List<String> indicators)
+	{
+		logger.info("[sc_mobile_fwd]: IndicatorQueryServiceImpl.queryCustomerPerceptionIndicatorData begin.Indicators={}", indicators);
+		//参数集合
+		Map<String, String> paramsMap = new HashMap<String, String>();
+		paramsMap.putAll(timestampMap);
+		
+		List<Object> datas = new ArrayList<Object>();
+		for (String indicator : indicators)
+		{
+			//SDR表名
+			String sdrName = IndicatorManager.instance().getValue(String.format("%s_SDR_NAME", indicator));
+			paramsMap.put("SDR_NAME", sdrName);
+			//指标名
+			String modelName = IndicatorManager.instance().getValue(String.format("%s_NAME", indicator));
+			paramsMap.put("MODEL_NAME", modelName);
+			//升降序状态
+			String descState = IndicatorManager.instance().getValue(String.format("%s_DESC", indicator));
+			paramsMap.put("DESC_STATE", descState);
+			
+			datas.add(indicatorQueryDao.queryCustomerPerceptionIndicatorData(paramsMap, indicator));
+		}
+		logger.info("[sc_mobile_fwd]: IndicatorQueryServiceImpl.queryCustomerPerceptionIndicatorData end.datas={}", datas);
+		return datas;
+	}
+	
+	/**
+	 * 查询市场支撑类指标数据 
+	 */
+	private List<Object> queryMarketSupportIndicatorData(Map<String, String> timestampMap, List<String> indicators)
+	{
+		logger.info("[sc_mobile_fwd]: IndicatorQueryServiceImpl.queryMarketSupportIndicatorData begin.Indicators={}", indicators);
+		Map<String, String> paramsMap = new HashMap<String, String>();
+		paramsMap.putAll(timestampMap);
+		
+		List<Object> datas = new ArrayList<Object>();
+		//终端类指标
+		if (indicators.size() == 6)
+		{
+			//TAC码
+			List<Object> tacNos = new ArrayList<Object>();
+			//获取终端数据
+			List<Map<String, Object>> tacDatas = indicatorQueryDao.queryMarketSupportTacData(paramsMap);
+			
+			//##### 1.VoLTE终端渗透率
+			List<Map<String, Object>> tacPermeateRateDatas = new ArrayList<Map<String, Object>>();
+			//##### 2.VoLTE终端转化率
+			List<Map<String, Object>> tacConversionRateDatas = new ArrayList<Map<String, Object>>();
+			
+			//Top10终端总注册VoLTE用户数
+			Double totalTacVoLTEUserNum = 0D; 
+			for (Map<String, Object> tacData : tacDatas)
+			{
+				Object userNum = tacData.get("VOLTE_USER_NUM");
+				totalTacVoLTEUserNum += (userNum == null ? 0D : Double.valueOf(userNum.toString()));
+			}
+			for (Map<String, Object> tacData : tacDatas)
+			{
+				//运算单个终端的VoLTE渗透率
+				Map<String, Object> data = new HashMap<String, Object>();
+				data.put("id", tacData.get("TAC_NO"));
+				data.put("name", tacData.get("BRAND_NAME") == null ? tacData.get("TAC_NO") : tacData.get("BRAND_NAME"));
+				
+				Object volteUserNum = tacData.get("VOLTE_USER_NUM");
+				Double singleTacVoLTEUserNum = (volteUserNum == null ? 0D : Double.valueOf(volteUserNum.toString()));
+				data.put("value", CommonUtils.cut(singleTacVoLTEUserNum / totalTacVoLTEUserNum, 2));
+				tacPermeateRateDatas.add(data);
+				
+				//运算单个终端的VoLTE转换率
+				Object user4GNum = tacData.get("4G_USER_NUM");
+				Double singleTac4GUserNum = (user4GNum == null ? 0D : Double.valueOf(user4GNum.toString()));
+				data.put("value", CommonUtils.cut(singleTacVoLTEUserNum / singleTac4GUserNum, 2));
+				tacConversionRateDatas.add(data);
+				
+				tacNos.add(tacData.get("TAC_NO"));
+			}
+			datas.add(new Indicator(indicators.get(0), indicators.get(0), "%", tacPermeateRateDatas));
+			datas.add(new Indicator(indicators.get(1), indicators.get(1), "%", tacConversionRateDatas));
+			
+			//注册成功率 / 接通率 / 切换成功率 / 掉话率
+			for (int i = 2; i < indicators.size(); i++)
+			{
+				//SDR表名
+				String sdrName = IndicatorManager.instance().getValue(String.format("%s_SDR_NAME", indicators.get(i)));
+				paramsMap.put("SDR_NAME", sdrName);
+				//指标名
+				String modelName = IndicatorManager.instance().getValue(String.format("%s_NAME", indicators.get(i)));
+				paramsMap.put("MODEL_NAME", modelName);
+				//TAC码
+				paramsMap.put("TAC_NO", CommonUtils.transformListToStr(tacNos));
+				
+				datas.add(indicatorQueryDao.queryMarketTacIndicatorData(paramsMap, indicators.get(i)));
+			}
+		}
+		//TODO
+		//CSV获取类指标
+		else
+		{
+			
+		}
+		logger.info("[sc_mobile_fwd]: IndicatorQueryServiceImpl.queryMarketSupportIndicatorData end.datas={}", datas);
+		return datas;
+	}
+
+
+	
+	
+	/**
+	 * 获取上一小时时间集合
+	 * 备注: 客户感知类指标为小时粒度(向前规整)
+	 */
+	private Map<String, String> getLastHourTimestampMap()
+	{
+		logger.info("[sc_mobile_fwd]: IndicatorQueryServiceImpl.getLastHourTimestampMap begin.");
+		long lastHourEndTimestamp = DateUtils.getLastHourEndTimestamp(new Date());
+		//上一小时起始时间戳
+		long lastHourStartTimestamp = lastHourEndTimestamp - 1*60*60;
+		
+		Map<String, String> lastHourTimestampMap = new HashMap<String, String>();
+		lastHourTimestampMap.put("START_TIME", String.valueOf(lastHourStartTimestamp));
+		lastHourTimestampMap.put("END_TIME", String.valueOf(lastHourEndTimestamp));
+		logger.info("[sc_mobile_fwd]: IndicatorQueryServiceImpl.getLastHourTimestampMap end.LastHourTimestampMap={}", 
+				lastHourTimestampMap);
+		return lastHourTimestampMap;
+	}
+	
+	/**
+	 * 获取上一天时间集合
+	 * 备注: 支撑市场类指标为天粒度(前一天)
+	 */
+	private Map<String, String> getLastDayTimestampMap()
+	{
+		logger.info("[sc_mobile_fwd]: IndicatorQueryServiceImpl.getLastDayTimestampMap begin.");
+		long lastDayEndTimestamp = DateUtils.getLastDayEndTimestamp(new Date());
+		//上一天起始时间戳
+		long lastDayStartTimestamp = lastDayEndTimestamp - 24*60*60;
+		
+		Map<String, String> lastDayTimestampMap = new HashMap<String, String>();
+		lastDayTimestampMap.put("START_TIME", String.valueOf(lastDayStartTimestamp));
+		lastDayTimestampMap.put("END_TIME", String.valueOf(lastDayEndTimestamp));
+		logger.info("[sc_mobile_fwd]: IndicatorQueryServiceImpl.getLastDayTimestampMap end.LastDayTimestampMap={}", 
+				lastDayTimestampMap);
+		return lastDayTimestampMap;
+	}
+}

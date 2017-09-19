@@ -1,0 +1,180 @@
+/**
+ * Created by gonghong on 2015-05-17;
+ * @description [VoLTE终端容器组件]
+ */
+
+import './TerminalSectionStyle.css';
+
+import {pieOption,barLineOption} from './TerminalEchartsOption';
+
+import Apis,{PARAMS_ID} from '../../utils/apis';
+
+import {getData,guid} from '../../utils/util';
+
+import SectionTitleBox from '../../component/SectionTitleBox/SectionTitleBox';
+
+import echarts from 'echarts';
+
+import React,{Component} from 'react';
+
+import ReactDOM from 'react-dom';
+
+
+class TerminalSectionConatner extends Component{
+	constructor(props){
+		super();
+	}
+	render(){
+		return(
+			<div>
+				<div className='terminal-top-conatner'>
+					<div className='terminal-top-title-box'>
+						<div className='terminal-top-left-title'>
+							<div className='rect-icon'></div>
+							<div className='section-index-title'>VoLTE终端渗透率</div>
+						</div>
+						<div className='terminal-top-right-title'>
+							<div className='rect-icon'></div>
+							<div className='section-index-title'>VoLTE终端转化率</div>
+						</div>
+					</div>
+					<div className='terminalPie' ref='terminalPie'></div>
+					<div className='terminal-barLine-conatner'>
+						<SectionTitleBox indexName='VoLTE终端性能统计'/>
+						<div className='terminalBarLine' ref='terminalBarLine'></div>
+					</div>
+				</div>
+			</div>
+		)
+	}
+	componentDidMount(){
+		let terminalPie=echarts.init(ReactDOM.findDOMNode(this.refs.terminalPie));
+		let terminalBarLine=echarts.init(ReactDOM.findDOMNode(this.refs.terminalBarLine));
+		getData(
+			Apis.Terminal_url,
+			{
+				indicators:PARAMS_ID.terminal_params
+			},
+			function(data){
+				if(data.code===200){
+
+					let nameArr=[];
+					data.data[0].data.map(function(evt){
+						nameArr.push(evt.name);
+					})
+					barLineOption.xAxis[0].data=nameArr;
+					data.data.map(function(item){
+						if(item.title==='VoLTE终端渗透率'){
+							let dataArr=[];
+							let length=[]
+							item.data.map(function(evt){
+								dataArr.push({value:evt.value,name:evt.name});
+								length.push(evt.name);
+							})
+							pieOption.legend.data=length;
+							pieOption.series[0].data=dataArr;
+							pieOption.series[0].name=item.title;
+						}else if(item.title==='VoLTE终端转换率'){
+							let data=[];
+							let valueArr=[];
+							let radarArr=[];
+							item.data.map(function(evt){
+								valueArr.push(evt.value)
+								data.push({value:valueArr});
+								radarArr.push({name:evt.name,max:100});
+							});
+
+							pieOption.radar.indicator=radarArr;
+							pieOption.series[1].data=data;
+							pieOption.series[1].name=item.title;
+						}else{
+							var barlineDat=[];
+							item.data.map(function(evt){
+								barlineDat.push(evt.value)
+							})
+							
+							barLineOption.legend.data.push(item.legend);
+							if(item.title!=='掉话率'){
+								barLineOption.series.push({
+						            name:item.legend,
+						            yAxisIndex:0,
+						            type:'bar',
+						            data:barlineDat,
+						            itemStyle:{
+						            	normal:{
+						            		barBorderRadius: 20
+						            	},
+						            	emphasis:{
+						            		color:"#FF6878"
+						            	}
+						            },
+						            barMaxWidth:22
+						        })
+							}else{
+								barLineOption.series.push(
+						            {
+							            name:item.legend,
+							            type:'line',
+							            yAxisIndex:1,
+							            data:barlineDat,
+							            symbol:"circle",
+							            symbolSize:7
+							        }
+						        )
+							}
+
+						}
+					})
+					pieOption.tooltip={
+				        trigger: 'item',
+				        axisPointer: {
+				            type: 'shadow'
+				        },
+				        formatter:function(params){
+				        	if(params.seriesType==='pie'){
+				        		return params.name+":"+params.value+"%"
+				        	}else{
+				        		if(params.value.length>0){
+				        			var li='';
+				        			params.value.map(function(value,index){
+				        				li+=nameArr[index]+":"+value+"%"+'<br/>'
+				        			})
+				        			return li;
+				        		}
+				        	}
+				        }
+				    }
+					terminalPie.setOption(pieOption);
+					terminalBarLine.setOption(barLineOption);
+				}
+			}
+		)
+		window.addEventListener('resize',function(){
+			if(terminalBarLine){
+				terminalBarLine.resize();
+			}
+			if(terminalPie){
+				terminalPie.resize();
+			}
+		})
+		if(terminalPie){
+			terminalPie.on('click',function(event){
+				if(top.showTabPanel){
+                    top.showTabPanel("VoLTE终端分析",guid(),window.urlConfig.terminalPermeability);
+                }else{
+                	window.open(window.urlConfig.terminalPermeability);
+                }
+			})
+		}
+		if(terminalBarLine){
+			terminalBarLine.on('click',function(event){
+				if(top.showTabPanel){
+                    top.showTabPanel("VoLTE终端分析",guid(),window.urlConfig.terminalPermeability);
+                }else{
+                	window.open(window.urlConfig.terminalPermeability);
+                }
+			})
+		}
+	}
+}
+export default TerminalSectionConatner;

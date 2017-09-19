@@ -1,0 +1,17 @@
+import {combineReducers} from 'redux';
+import {GET_TIME} from '../actions/action';
+
+function linkTime(state={startYear:"",startMonth:"",startDate:"",startHour:"",startMinute:"",endYear:"",endMonth:"",endDate:"",endHour:"",endMinute:""},action){
+	switch (action.type){
+		case GET_TIME:
+			return Object.assign({},state,action.timeObj)
+		default :
+			return state
+	}
+}
+
+const myReducers = combineReducers({
+	linkTime
+});
+
+export default myReducers;

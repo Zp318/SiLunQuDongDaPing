@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 山东联通专题分析应用自定义CSRF白名单配置 -->
+<map>
+	<entry key="/**/*.ttf" value="GET|POST"/>
+	<entry key="/**/*.otf" value="GET|POST"/>
+	<entry key="/**/*.json" value="GET|POST"/>
+	<entry key="/initPagedata/**/*.action" value="GET|POST"/>
+	<entry key="/vipUser/*.action" value="GET|POST"/>
+	<entry key="/userServAnalysis/*.action" value="GET|POST"/>
+	<entry key="/keyServ/*.action" value="GET|POST"/>
+	<entry key="/appHome/*.action" value="GET|POST"/>
+	<entry key="/countyData/*.action" value="GET|POST"/>
+	<entry key="/keyArea/*.action" value="GET|POST"/>
+	<entry key="/realTimeSupport/*.action" value="GET|POST"/>
+	<entry key="/terminalAnalysis/*.action" value="GET|POST"/>
+	<entry key="/export/downloadExportFile.action" value="GET|POST"/>
+	<entry key="/**/*.*" value="GET|POST"/>
+</map>

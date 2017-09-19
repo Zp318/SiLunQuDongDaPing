@@ -1,0 +1,35 @@
+/*
+*created by zhangpeng at 2017-05-16
+*图表模板组件：
+*图表表头、图表模板
+*
+* props传递参数：
+* initIndex——图表索引
+* dataone、datatwo——ajax发送参数
+* minvalue——左轴最小y坐标值
+ */
+
+import React, { Component } from 'react';
+import './BarModelStyle.css';
+import BarComponent  from '../BarComponent/BarComponent'
+
+class BarModel extends Component {
+	constructor(props){
+		super(props);	
+	};
+	render() {
+	    return (
+	      <div className="bar_model">
+	       	<div className="bar_title">
+	    			<div className="bar_title_circle"></div>
+	    			<div className="bar_title_text">{this.props.titleone}</div>
+	    			<div className={this.props.stylename}></div>
+	    			<div className="bar_title_text">{this.props.titletwo}</div>
+	       	</div>
+	        <BarComponent initIndex={this.props.myindex} dataone={this.props.dataone} datatwo={this.props.datatwo} drillKey={this.props.drillKey}/>
+	      </div>
+	    );
+	}
+}
+
+export default BarModel;

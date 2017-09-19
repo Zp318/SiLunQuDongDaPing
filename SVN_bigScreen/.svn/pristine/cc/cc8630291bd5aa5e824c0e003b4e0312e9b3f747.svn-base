@@ -1,0 +1,28 @@
+/*
+*created by zhangpeng at 2017-05-16
+*根组件APP
+ */
+
+import React, { Component } from 'react';
+import TopHead  from './UIComponents/TopHead/TopHead'
+import BarModel  from './UIComponents/BarModel/BarModel'
+
+class App extends Component {
+  render() {
+    return (
+      <div className="App">
+        <TopHead tophead="客户感知"/>
+        <div className="content">
+          <BarModel titleone="VoLTE注册成功率" myindex="0" dataone="SF_VOLTE_REGISTER_SUCC_RATE_1" minvalue="5"/>
+          <BarModel titleone="VoLTE接通率" titletwo="VoLTE接通时延" stylename="bar_title_circle" myindex="1" dataone="SF_VOLTE_CONNECT_RATE_1" datatwo="VOICE_MO_ALERT_AVG_DELAY" minvalue="20"/>
+          <BarModel titleone="SRVCC切换成功率" myindex="2" dataone="SF_SV_ESRVCC_SUCC_RATE_1" minvalue="5"/>
+          <BarModel titleone="VoLTE掉话率" myindex="3" dataone="SF_VOLTE_CALL_DROP_RATE_1" minvalue="10"/>
+          <BarModel titleone="MOS大于3.0占比" myindex="4" dataone="SF_VOLTE_MOS_GOOD_RATE" minvalue="10"/>
+          <BarModel titleone="CSFB回落成功率" myindex="5" dataone="CSFB_FALLBACK_SUCCESS_RATE" minvalue="5"/>
+        </div>
+      </div>
+    );
+  }
+}
+
+export default App;

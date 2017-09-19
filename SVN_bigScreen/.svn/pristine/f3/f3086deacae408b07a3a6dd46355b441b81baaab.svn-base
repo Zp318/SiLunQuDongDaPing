@@ -1,0 +1,24 @@
+/**
+ * Created by gonghong on 2017-05-16;
+ * @description [页面路径地址配置文件]
+ */
+
+let Apis;
+if (process.env.NODE_ENV == 'development') {
+	Apis={
+		PAGE_URL: 'query/indicators.action',
+		Terminal_url:'query/terminal.action'
+	}
+}else{
+	Apis={
+		PAGE_URL:window.basePath + 'query/indicators.action',
+		Terminal_url:window.basePath + 'query/indicators.action'
+	}
+}
+export default Apis;
+
+export let PARAMS_ID={
+	SF_VOLTE_CALL_PARAM:["SF_VOLTE_CALL_DELAY_RATE"],
+	serviceRate_params:['AUTO_SUBSCRIBER_REGSN','AUTO_SUBSCRIBER_NUMBER','SF_VOLTE_AUTO_OPEN_SUCC_RATE'],
+	terminal_params:['SF_VOLTE_TAC_PERMEATE_RATE','SF_VOLTE_TAC_CONVERSION_RATE','SF_VOLTE_REGISTER_SUCC_RATE_2','SF_VOLTE_CONNECT_RATE_2','SF_SV_ESRVCC_SUCC_RATE_2','SF_VOLTE_CALL_DROP_RATE_2']
+}

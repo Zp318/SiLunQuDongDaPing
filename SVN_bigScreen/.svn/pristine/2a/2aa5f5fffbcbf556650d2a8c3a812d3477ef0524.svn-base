@@ -1,0 +1,6 @@
+﻿Ext.namespace('ecm.commontip');
+ecm.commontip.page = function(){
+	this.tip_403 = '该功能未授权。';
+	this.dberror_6eae9ac6827c0dfca82fe3d12b4c790b = '数据库连接失败。';
+	this.tip_exception = '访问页面错误。';
+};

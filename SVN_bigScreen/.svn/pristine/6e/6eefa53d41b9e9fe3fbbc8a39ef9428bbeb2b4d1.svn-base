@@ -1,0 +1,16 @@
+/**
+ * Created by gonghong on 2017-05-16;
+ * @description [页面路径地址配置文件]
+ */
+
+let Apis;
+if (process.env.NODE_ENV == 'development') {
+	Apis={
+		PAGE_URL: 'http://localhost:8080/query/indicators.action'
+	}
+}else{
+	// Apis={
+	// 	PAGE_URL:basePath + 'query/indicators.action'
+	// }
+}
+export default Apis;

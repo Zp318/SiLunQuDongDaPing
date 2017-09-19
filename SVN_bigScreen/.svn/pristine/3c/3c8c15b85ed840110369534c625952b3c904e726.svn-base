@@ -1,0 +1,77 @@
+package com.huawei.sc_mobile_fwd.pages.dao.impl;
+
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Repository;
+
+import com.huawei.sc_mobile_fwd.comm.thread.QueryTask;
+import com.huawei.sc_mobile_fwd.comm.thread.QueryThreadPool;
+import com.huawei.sc_mobile_fwd.pages.dao.IndicatorQueryDao;
+import com.huawei.sc_mobile_fwd.pages.model.Indicator;
+import com.huawei.sc_mobile_fwd.pages.utils.IndicatorManager;
+
+/**
+ * 指标查询持久层类 
+ * @author SF2011 2017年5月18日
+ */
+@Repository
+public class IndicatorQueryDaoImpl implements IndicatorQueryDao
+{
+    /**
+     * 日志器
+     */
+    private static final Logger logger = LoggerFactory.getLogger(IndicatorQueryDaoImpl.class);
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Object queryCustomerPerceptionIndicatorData(Map<String, String> paramsMap, String indicator)
+	{
+		logger.info("[sc_mobile_fwd]: SeqTemplateDaoImpl.queryCustomerPerceptionIndicatorData begin.ParamsMap={}, indicator={}",
+				paramsMap, indicator);
+		List<Map<String, Object>> data = QueryThreadPool.query(new QueryTask("customer_template", paramsMap));
+		//创建指标对象
+		Indicator ind = new Indicator();
+		ind.setTitle(indicator);
+		ind.setLegend(indicator);
+		ind.setUnit(IndicatorManager.instance().getValue(String.format("%s_UNIT", indicator)));
+		ind.setData(data);
+		logger.info("[sc_mobile_fwd]: SeqTemplateDaoImpl.queryCustomerPerceptionIndicatorData end.Indicator={}", ind);
+		return ind;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Object queryMarketTacIndicatorData(Map<String, String> paramsMap, String indicator)
+	{
+		logger.info("[sc_mobile_fwd]: SeqTemplateDaoImpl.queryMarketTacIndicatorData begin.ParamsMap={}, indicator={}",
+				paramsMap, indicator);
+		List<Map<String, Object>> data = QueryThreadPool.query(new QueryTask("market_template", paramsMap));
+		//创建指标对象
+		Indicator ind = new Indicator();
+		ind.setTitle(indicator);
+		ind.setLegend(indicator);
+		ind.setUnit(IndicatorManager.instance().getValue(String.format("%s_UNIT", indicator)));
+		ind.setData(data);
+		logger.info("[sc_mobile_fwd]: SeqTemplateDaoImpl.queryMarketTacIndicatorData end.Indicator={}", ind);
+		return ind;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public List<Map<String, Object>> queryMarketSupportTacData(Map<String, String> paramsMap)
+	{
+		logger.info("[sc_mobile_fwd]: SeqTemplateDaoImpl.queryMarketSupportTacData begin.ParamsMap={}", paramsMap);
+		List<Map<String, Object>> tacData = QueryThreadPool.query(new QueryTask("volte_terminal_user", paramsMap));
+		logger.info("[sc_mobile_fwd]: SeqTemplateDaoImpl.queryMarketSupportTacData end.TacData={}", tacData);
+		return tacData;
+	}
+}

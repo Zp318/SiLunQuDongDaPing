@@ -1,0 +1,132 @@
+package com.huawei.sc_mobile_fwd.comm.middleware;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.alibaba.fastjson.JSONObject;
+import com.huawei.seq.WebCoreTools;
+import com.huawei.smartcare.dac.sdk.bean.Condition;
+import com.huawei.smartcare.dac.sdk.bean.Condition.Type;
+import com.huawei.smartcare.dac.sdk.bean.DataRequest;
+import com.huawei.smartcare.dac.sdk.bean.RequestColumn;
+import com.huawei.sc_mobile_fwd.comm.FileUtil;
+import com.huawei.sc_mobile_fwd.comm.logger.SeqLogger;
+
+/**
+ * 
+ * 类名 : JsonRequest
+ * 描述: 查询中间件Json请求对象
+ */
+public class JsonRequest
+{
+    private static final SeqLogger logger = new SeqLogger();
+    
+    private static Map<String, JsonRequest> map = new HashMap<String, JsonRequest>();
+
+    private File jsonFile;
+    
+    private DataRequest dataRequest;
+    
+    private Map<String, RequestColumn> columnMap;
+    
+    private JsonRequest()
+    {
+        
+    }
+    
+    /**
+     * 
+     * 方法名: getInstance
+     * 描述：根据json文件名获取JsonRequest对象
+     * @param fileName 文件名
+     * @return JsonRequest 
+     */
+    public static JsonRequest getInstance(String fileName)
+    {
+        JsonRequest jr = map.get(fileName);
+        File file = WebCoreTools.getConfigFile(fileName + ".json").getFile();
+        if (jr == null || jr.jsonFile.lastModified() != file.lastModified())
+        {
+            jr = new JsonRequest();
+            jr.init(file);
+            map.put(fileName, jr);
+        }
+        return jr;
+    }
+    
+    private void init(File file)
+    {
+        jsonFile = file;
+        String jsonStr = FileUtil.readFileContent(file.getName());
+        dataRequest = JSONObject.parseObject(jsonStr, DataRequest.class);
+        columnMap = new HashMap<String, RequestColumn>();
+        for (RequestColumn column : dataRequest.getColumns())
+        {
+            columnMap.put(column.getAlias(), column);
+        }
+    }
+    
+    /**
+     * 
+     * 方法名: getDataRequest
+     * 描述：根据别名获取包含指定column的DataRequest，不指定别名则返回所有column
+     * @param aliases 别名
+     * @return DataRequest DataRequest对象
+     */
+    public DataRequest getDataRequest(String... aliases)
+    {
+        DataRequest request = new DataRequest();
+        request.setAction(dataRequest.getAction());
+        request.setCubes(dataRequest.getCubes());
+        setColmun(request, aliases);
+        setCondition(request);
+        return request;
+    }
+    
+    private void setColmun(DataRequest request, String ...aliases)
+    {
+        List<RequestColumn> columns = new ArrayList<RequestColumn>();
+        if (aliases.length == 0)
+        {
+            for (RequestColumn column : dataRequest.getColumns())
+            {
+                columns.add(column);
+            }
+        }
+        else
+        {
+            for (String alias : aliases)
+            {
+                RequestColumn column = columnMap.get(alias);
+                if (column == null)
+                {
+                    logger.error("error column alias: " + alias);
+                    continue;
+                }
+                columns.add(column);
+            }
+        }
+        request.setColumns(columns);
+    }
+    
+    private void setCondition(DataRequest request)
+    {
+        Condition src = dataRequest.getConditions();
+        Condition target = request.getConditions();
+        if (src.getRelation() != null)
+        {
+            target.setRelation(src.getRelation());
+        }
+        else 
+        {
+            target.setRelation(Type.AND);
+        }
+        for (Condition child :src.getChilds())
+        {
+            target.getChilds().add(child);
+        }
+    }
+}

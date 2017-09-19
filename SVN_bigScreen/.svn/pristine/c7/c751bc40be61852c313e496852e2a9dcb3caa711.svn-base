@@ -1,0 +1,86 @@
+/**
+ * Created by gonghong on 2017-05-15;
+ * @description [单一的柱状图容器]
+ */
+import './EchartsBarBoxStyle.css';
+
+import SectionTitleBox from '../../component/SectionTitleBox/SectionTitleBox';
+
+import React,{Component,PropTypes} from 'react';
+
+import ReactDOM from 'react-dom';
+
+import echarts from 'echarts';
+
+export default class EchartsBarBox extends Component{
+	constructor(props){
+		super();
+		this.barEcharts;
+	}
+	componentWillReceiveProps(nextprops){
+		let me=this;
+		if(this.barEcharts){
+			this.barEcharts.clear();
+			if(nextprops.options){
+
+				if(nextprops.options.series[0].data.length<=0||nextprops.options.series[0].length<=0){
+                    let loadObj={
+                        text: 'No Data',
+                        color: '#c23531',
+                        textColor:'#000',
+                        maskColor:'rgba(255, 255, 255, 0.9)',
+                        zlevel: 0
+                    }
+                    me.barEcharts.showLoading(loadObj);
+				}else{
+					 me.barEcharts.hideLoading();
+				}
+				this.barEcharts.setOption(nextprops.options);
+			}
+			window.removeEventListener('resize',function(){
+				me.barEcharts.resize();
+			})
+			me.barEcharts.resize();
+			window.addEventListener('resize',function(){
+				me.barEcharts.resize();
+			})
+		}
+	}
+	componentDidMount(){
+		
+		let me=this;
+		this.barEcharts=echarts.init(ReactDOM.findDOMNode(this.refs.echartsBar));
+		this.barEcharts.on('click',function(event){
+			me.props.echartOnClick(event);
+		})
+	}
+	componentWillUnmount(){
+        /***
+         * @func:当组件被移除时；
+         */
+        //window.onresize="";
+    }
+	render(){
+		
+		const INDEXNAME=this.props.indexName;
+
+		return(
+			<div className='echartsBar-conatner'>
+				<SectionTitleBox indexName={INDEXNAME}/>
+				<div className='ecahrtsBar-ecahrt-box'>
+					<div className='ecahrtsBarStyle' ref='echartsBar'></div>
+				</div>
+			</div>
+		)
+	}
+}
+
+/**
+ * [propTypes description]
+ * @indexName {String} [名称]
+ * @echartId {String}	[echarts id]
+ */
+// EchartsBarBox.propTypes={
+// 	indexName:PropTypes.string.isRequired,
+// 	echartId:PropTypes.string.isRequired
+// }

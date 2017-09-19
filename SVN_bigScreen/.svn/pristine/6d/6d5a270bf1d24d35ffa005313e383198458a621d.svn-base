@@ -1,0 +1,21 @@
+/**
+ * Created by gonghong on 2017-05-15;
+ * @description [页面总容器]
+ */
+import TopHeadComponent from '../commons/components/TopHeadComponent/TopHeadComponent';
+import MainContenct from './contaners/MainContenct/MainContenct';
+import React,{Component} from 'react';
+
+export default class RootApp extends Component{
+	constructor(props){
+		super();
+	}
+	render(){
+		return(
+			<div>
+				<TopHeadComponent titleName='客户感知'/>
+				<MainContenct />
+			</div>
+		)
+	}
+}

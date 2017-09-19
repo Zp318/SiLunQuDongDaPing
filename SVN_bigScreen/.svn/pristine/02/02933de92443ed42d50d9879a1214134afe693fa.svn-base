@@ -1,0 +1,114 @@
+/**
+ * Created by gonghong on 2017-05-16;
+ * @description [业务自动开通成功率容器组件]
+ */
+
+import Apis,{PARAMS_ID} from '../../utils/apis';
+
+import {getData,guid} from '../../utils/util';
+
+import EchartsBarBox from '../EchartsBarBox/EchartsBarBox';
+
+import React,{Component} from 'react';
+
+import {barLineOption} from './ServerRateOptions';
+
+export default class ServiceRateConatner extends Component{
+	constructor(props){
+		super();
+		this.state={
+			barId:[],
+			starttime:"",
+			endtime:"",
+			options:barLineOption
+		}
+		this.starttime;
+		this.endtime;
+	}
+	componentDidMount(){
+		/**
+		 * @function:组件渲染完成;
+		 */
+		let me=this;
+		getData(
+			Apis.PAGE_URL,
+			{
+				indicators:JSON.stringify(PARAMS_ID.serviceRate_params)
+			},
+			function(data){
+				if(data.code==200){
+					barLineOption.series=[];
+					let nameArr=[];
+					let len=data.data.length;
+					data.data[0].data.map(function(evt){
+						nameArr.push(evt.name);
+					})
+					barLineOption.xAxis[0].data=nameArr;
+					data.data.map(function(item,index){
+						var barlineDat=[];
+						item.data.map(function(evt){
+							barlineDat.push(evt.value);
+						});
+						barLineOption.legend.data.push(item.legend);
+						if(index<len-1){
+							barLineOption.series.push({
+					            name:item.legend,
+					            yAxisIndex:0,
+					            type:'bar',
+					            data:barlineDat,
+					            
+					            itemStyle:{
+					            	normal:{
+					            		barBorderRadius: 20
+					            	},
+					            	emphasis:{
+					            		color:"#FF6878"
+					            	}
+					            },
+					            barMaxWidth:22
+					        })
+						}else{
+							barLineOption.series.push(
+					            {
+						            name:item.legend,
+						            type:'line',
+						            yAxisIndex:1,
+						            data:barlineDat,
+						            symbol:"circle",
+						            itemStyle:{
+						            	emphasis:{
+						            		color:"#FF6878"
+						            	}
+						            },
+						            symbolSize:7
+						        }
+					        )
+						}
+					})
+					me.setState({
+						options:barLineOption
+					})
+				}
+			}
+		)
+	}
+	echartOnClick(event){
+		var me=this;
+		//var url=window.urlConfig.openSucceccRate+`?startTime=${me.starttime}&endTime=${me.endtime}`;
+		var url=window.urlConfig.openSucceccRate;
+		if(top.showTabPanel){
+           top.showTabPanel("业务自动开通成功率",guid(),url);
+        }else{
+        	window.open(url);
+        }
+	}
+	render(){
+		return(
+			<div>
+				<EchartsBarBox indexName='业务自动开通成功率' echartId='serviceRateId' 
+				options={this.state.options}
+				echartOnClick={this.echartOnClick.bind(this)}/>
+			</div>
+		)
+	}
+}

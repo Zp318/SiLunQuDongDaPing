@@ -1,0 +1,32 @@
+/**
+ * Created by gonghong on 2017-05-15;
+ * @description [页面公用头部组件]
+ */
+
+import './TopHeadStyle.css';
+import React,{Component,PropTypes} from 'react';
+
+export default class TopHeadComponent extends Component{
+	constructor(props){
+		super();
+	}
+	render(){
+		const TITLE_TEXT=this.props.titleName;
+		return(
+			<div className='topHead_conatner'>
+				<div className='left-title'>{TITLE_TEXT}</div>
+				<div className='topHead-icon-box'>
+					<div className='topHead-icon'></div>
+					<div className='topHead-icon-title'>中国移动</div>
+				</div>
+			</div>
+		)
+	}
+}
+/**
+ * [propTypes description]
+ * @titleName {String} [名称]
+ */
+TopHeadComponent.propTypes={
+	titleName:PropTypes.string.isRequired
+}

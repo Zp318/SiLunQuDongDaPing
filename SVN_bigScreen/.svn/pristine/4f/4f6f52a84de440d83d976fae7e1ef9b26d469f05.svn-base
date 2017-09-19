@@ -1,0 +1,32 @@
+/**
+ * Created by gonghong on 2017-05-15;
+ * @description [内容部分总容器]
+ */
+
+import './MainContenctStyle.css';
+
+import CallRatioContaner from '../CallRatioContaner/CallRatioContaner';
+
+import ServiceRateConatner from '../ServiceRateConatner/ServiceRateConatner';
+
+import React,{Component} from 'react';
+
+export default class MainContenct extends Component{
+	constructor(props){
+		super();
+	}
+	render(){
+		return(
+			<div className='MainContenct-conatner'>
+				<div className='left-content'>
+					<CallRatioContaner/>
+					<div style={{marginTop:'0.18rem'}}>
+						<ServiceRateConatner />
+					</div>
+				</div>
+				<div className='right-content'>
+				</div>
+			</div>
+		)
+	}
+}

@@ -1,0 +1,35 @@
+/**
+ * Created by gonghong on 2017-05-15;
+ * @description [单一的柱状图容器]
+ */
+import './EchartsBarBoxStyle.css';
+
+import SectionTitleBox from '../../component/SectionTitleBox/SectionTitleBox';
+
+import React,{Component,PropTypes} from 'react';
+export default class EchartsBarBox extends Component{
+	constructor(props){
+		super();
+	}
+	render(){
+		const INDEXNAME=this.props.indexName;
+		return(
+			<div className='echartsBar-conatner'>
+				<SectionTitleBox indexName={INDEXNAME}/>
+				<div className='ecahrtsBar-ecahrt-box'>
+					<div className='ecahrtsBarStyle' ref={this.props.echartId}></div>
+				</div>
+			</div>
+		)
+	}
+}
+
+/**
+ * [propTypes description]
+ * @indexName {String} [名称]
+ * @echartId {String}	[echarts id]
+ */
+// EchartsBarBox.propTypes={
+// 	indexName:PropTypes.string.isRequired,
+// 	echartId:PropTypes.string.isRequired
+// }

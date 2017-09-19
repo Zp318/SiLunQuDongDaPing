@@ -1,0 +1,430 @@
+package com.huawei.sc_mobile_fwd.comm.aspect;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.Normalizer;
+import java.text.Normalizer.Form;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang.StringUtils;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.alibaba.fastjson.JSONObject;
+import com.huawei.seq.tools.CloseableUtils;
+import com.huawei.seq.tools.ConfigUtils;
+import com.huawei.seq.tools.ExportUtils;
+import com.huawei.seq.tools.FlexDataAdapter;
+import com.huawei.seq.tools.FlexDataCommand;
+import com.huawei.seq.tools.SCException;
+import com.huawei.seq.tools.SecurityFliterUtils;
+import com.huawei.seq.tools.VerifyUtils;
+
+/**
+ * 参数校验类
+ * 
+ */
+public class ParamInterceptor implements HandlerInterceptor
+{
+    
+    /**
+     * 日志
+     */
+    private static final Logger logger = LoggerFactory.getLogger(ParamInterceptor.class);
+    
+    /**
+     * 规则所在map
+     */
+    private static Map<String, Map<String, String>> paramValidate = null;
+    
+    /**
+     * 开关所在map
+     */
+    private static Properties paramConfig = null;
+    
+    /**
+     * 配置文件路径
+     */
+    private static final String XML_PATH = "/WEB-INF/conf/vcc/common/config";
+    
+    /**
+     * 配置文件路径
+     */
+    private static final String CONFIG_PATH = "../conf/vcc/common/config/param_config.properties";
+    
+    private String flexMappingURL = "flex";
+    
+    private String extMappingURL = "extdataJs";
+    
+    /**
+     * 参数拦截并校验
+     * @param request 请求
+     * @param response 响应
+     * @param handler handler
+     * @return 是否通过校验
+     */
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+    {
+        try
+        {
+            request.setCharacterEncoding("utf-8");
+            String url = request.getRequestURL().toString();
+            url = Normalizer.normalize(url, Form.NFKC);
+            String oldUrl = url;
+            int positon = url.lastIndexOf("/");
+            if (-1 == positon)
+            {
+                logger.error("[SEQ_TEMPLATE_VERIFY] url is error url: URL[{}] ",
+                        SecurityFliterUtils.loggerwhiteListSecurityCode(url));
+                return false;
+            }
+            url = url.substring(positon);
+            oldUrl = oldUrl.substring(0, positon);
+            oldUrl = oldUrl.substring(oldUrl.lastIndexOf("/") + 1);
+            if (null == paramConfig || paramConfig.isEmpty())
+            {
+                paramConfig = getConfigFile();
+            }
+            String urlType = (String)paramConfig.get(oldUrl);
+            if (null == urlType || "".equals(urlType))
+            {
+                return true;
+            }
+            if (urlType.equals(extMappingURL))
+            {
+                String dataType = request.getParameter("dataType");
+                String jsonStr = request.getParameter("req");
+                String command = oldUrl + "_" + request.getParameter("command");
+                Map<String,Object> paramMap = new HashMap<String,Object>();
+                if ("json".equalsIgnoreCase(dataType)
+                        && StringUtils.isNotBlank(jsonStr) && !"{}".equals(jsonStr))
+                {
+                    JSONObject jsonObject = JSONObject.parseObject(jsonStr);
+                    paramMap = (Map<String, Object>)jsonObject;
+                }
+                
+                //参数为空的情况下不进行校验
+                if (null == paramMap || paramMap.isEmpty())
+                {
+                    return true;
+                }
+
+                for (Map.Entry<String, Object> set : paramMap.entrySet())
+                {
+                    String value = (null == set.getValue()) ? "" : set.getValue().toString();
+                    if (!checkUserInput(command, "", set.getKey(), value))
+                    {
+                        return false;
+                    }
+                }
+            }
+            else if (flexMappingURL.equals(urlType))
+            {
+                FlexDataCommand flexDateCommand = FlexDataAdapter.getCommand(request);
+                
+                //初始化flex请求没有参数情况
+                if (null == flexDateCommand)
+                {
+                    //跳转的时候是通过这个方法获取数据。
+                    Map<String,String[]> parameterMap = request.getParameterMap();
+                    String command = oldUrl + "_" + url.replace("/", "");
+                    //参数为空的情况下不进行校验
+                    if (null == parameterMap || parameterMap.isEmpty())
+                    {
+                        return true;
+                    }
+
+                    for (Map.Entry<String, String[]> set : parameterMap.entrySet())
+                    {
+                        String[] tempValue = set.getValue();
+                        for (int i = 0; i < tempValue.length; i++)
+                        {
+                            if (!checkUserInput(command, "", set.getKey(), tempValue[i]))
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                    return true;
+                }
+                Map<String, String> parameterMap = flexDateCommand.getCommandmap();
+                String command = oldUrl + "_" + flexDateCommand.getCommand();
+                
+                String reCommand = oldUrl + "_" + url.replace("/", "");
+                //参数为空的情况下不进行校验
+                if (null == parameterMap || parameterMap.isEmpty())
+                {
+                    return true;
+                }
+                
+                for (Map.Entry<String, String> set : parameterMap.entrySet())
+                {
+                    if (!checkUserInput(command, reCommand, set.getKey(), set.getValue()))
+                    {
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                Map<String,String[]> parameterMap = request.getParameterMap();
+                String command = oldUrl + "_" + url.replace("/", "");
+                //参数为空的情况下不进行校验
+                if (null == parameterMap || parameterMap.isEmpty())
+                {
+                    return true;
+                }
+
+                for (Map.Entry<String, String[]> set : parameterMap.entrySet())
+                {
+                    String[] tempValue = set.getValue();
+                    for (int i = 0; i < tempValue.length; i++)
+                    {
+                        if (!checkUserInput(command, "", set.getKey(), tempValue[i]))
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        catch (SCException e)
+        {
+            logger.error("[SEQ_TEMPLATE_VERIFY] preHandle is error : throws SCException");
+        }
+        catch (IOException e)
+        {
+            logger.error("[SEQ_TEMPLATE_VERIFY] preHandle is error : throws IOException");
+        }
+        return true;
+    }
+    
+    /**
+     * 解析配置文件，获取校验规则
+     * @return Map<String, List<Map<String, String>>>
+     * @see [类、类#方法、类#成员]
+     */
+    @SuppressWarnings("rawtypes")
+    private static synchronized Map<String, Map<String, String>> getRuleMap()
+    {
+        Map<String, Map<String, String>> map = new HashMap<String, Map<String, String>>();
+        String basePath = ExportUtils.getBasePath();
+        SAXReader reader = new SAXReader();
+        try
+        {
+            Map<String, String> subMap = null;
+            File file = new File(basePath + XML_PATH);
+            if (!file.exists())
+            {
+                logger.error("[SEQ_TEMPLATE_VERIFY] getGranularityMap file is not exists!");
+                return map;
+            }
+            File[] files = file.listFiles();
+            if (files != null)
+            {
+                for (File tmpFile : files)
+                {
+                    if (!tmpFile.getCanonicalPath().endsWith("xml"))
+                    {
+                        continue;
+                    }
+                    Document doc = reader.read(tmpFile);
+                    Element root = doc.getRootElement();
+                    for (Iterator it = root.elementIterator(); it.hasNext();)
+                    {
+                        Element node = (Element)it.next();
+                        subMap = new HashMap<String, String>();
+                        for (Iterator it1 = node.elementIterator(); it1.hasNext();)
+                        {
+                            Element node1 = (Element)it1.next();
+                            subMap.put(node1.getName(), node1.getText());
+                        }
+                        map.put(node.getName(), subMap);
+                    }
+                }
+            } 
+        }
+        catch (DocumentException e)
+        {
+            logger.error("[SEQ_TEMPLATE_VERIFY] getGranularityMap DocumentException");
+        }
+        catch (IOException e)
+        {
+            logger.error("[SEQ_TEMPLATE_VERIFY] getGranularityMap IOException");
+        }
+        return map;
+    }
+
+    /**
+     * 参数拦截并校验
+     * @param arg0 请求
+     * @param arg1 响应
+     * @param arg2 参数
+     * @param arg3 异常
+     */
+    @Override
+    public void afterCompletion(HttpServletRequest arg0,
+            HttpServletResponse arg1, Object arg2, Exception arg3)
+    {
+        
+    }
+
+    /**
+     * 参数拦截并校验
+     * @param arg0 请求
+     * @param arg1 响应
+     * @param arg2 参数
+     * @param arg3 视图
+     */
+    @Override
+    public void postHandle(HttpServletRequest arg0, HttpServletResponse arg1,
+            Object arg2, ModelAndView arg3)
+    {
+        
+    }
+    
+    /**
+     * 根据正则匹配输入字符串
+     * @param command 要匹配正则表达式的key
+     * @param reCommand 要匹配正则表达式的key
+     * @param param 要匹配正则表达式的key
+     * @param value 要匹配的字符串
+     * @return [参数说明] 是否配置
+     */
+    public static boolean checkUserInput(String command,String reCommand, String param, String value)
+    {
+        if (value == null)
+        {
+            return false;
+        }
+        if ("command".equals(param))
+        {
+            String urlCheck = "^[\\w\\s]*$";
+            Pattern regex = Pattern.compile(urlCheck);
+            Matcher matcher = regex.matcher(value);
+            boolean isMatched = matcher.matches();
+            
+            if (!isMatched)
+            {
+                logger.error("[SEQ_TEMPLATE_VERIFY] verify the params is fail command " 
+                        + SecurityFliterUtils.loggerwhiteListSecurityCode(command) 
+                        + " key " + SecurityFliterUtils.loggerwhiteListSecurityCode(param) 
+                        + " params " + SecurityFliterUtils.loggerwhiteListSecurityCode(value) 
+                        + " regex " + SecurityFliterUtils.loggerwhiteListSecurityCode(urlCheck));
+                return false;
+            }
+        }
+        if ("inputKey".equals(param) && !StringUtils.isEmpty(value))
+        {
+            String urlCheck = "^[^\\<\\>]+$";
+            Pattern regex = Pattern.compile(urlCheck);
+            Matcher matcher = regex.matcher(value);
+            boolean isMatched = matcher.matches();
+            
+            if (!isMatched)
+            {
+                logger.error("[SEQ_TEMPLATE_VERIFY] verify the params is fail command " 
+                        + SecurityFliterUtils.loggerwhiteListSecurityCode(command) 
+                        + " key " + SecurityFliterUtils.loggerwhiteListSecurityCode(param) 
+                        + " params " + SecurityFliterUtils.loggerwhiteListSecurityCode(value) 
+                        + " regex " + SecurityFliterUtils.loggerwhiteListSecurityCode(urlCheck));
+                return false;
+            }
+        }
+        if (null == paramValidate || paramValidate.isEmpty())
+        {
+            paramValidate = getRuleMap();
+        }
+        
+        Map<String, String> temp = (Map<String, String>)paramValidate.get(command);
+        if (null == temp)
+        {
+            temp = (Map<String, String>)paramValidate.get(reCommand);
+        }
+        if (null != temp)
+        {
+            String tempValue = temp.get(param);
+            if (null != tempValue && !"".equals(tempValue))
+            {
+                //3.0安全加固对普通字符串进行归一化再校验 
+                value = Normalizer.normalize(value,Form.NFKC);
+                if (!VerifyUtils.verifyByRegex(value, tempValue))
+                {
+                    logger.error("[SEQ_TEMPLATE_VERIFY] verify the params is fail command " 
+                                + SecurityFliterUtils.loggerwhiteListSecurityCode(command) 
+                                + " key " + SecurityFliterUtils.loggerwhiteListSecurityCode(param) 
+                                + " params " + SecurityFliterUtils.loggerwhiteListSecurityCode(value) 
+                                + " regex " + SecurityFliterUtils.loggerwhiteListSecurityCode(tempValue));
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * 解析配置文件，获取时间粒度
+     * @return Map<String, List<Map<String, String>>>
+     * @see [类、类#方法、类#成员]
+     */
+    private static synchronized Properties getConfigFile()
+    {
+        Properties map = new Properties();
+        File file = ConfigUtils.getFile(CONFIG_PATH);
+        
+        InputStream in = null;
+        try
+        {
+            in = new FileInputStream(file);
+            map.load(in);
+        }
+        catch (FileNotFoundException e)
+        {
+            try
+            {
+                logger.error("[SEQ_TEMPLATE_VERIFY] VerifyUtils checkUserInput File is not found {}", 
+                        SecurityFliterUtils.loggerwhiteListSecurityCode(file.getCanonicalPath()));
+            }
+            catch (IOException e1)
+            {
+                logger.error("[SEQ_TEMPLATE_VERIFY]: getCanonicalPath is error throws IOException");
+            }
+        }
+        catch (IOException e)
+        {
+            try
+            {
+                logger.error("[SEQ_TEMPLATE_VERIFY] VerifyUtils checkUserInput File throws IOException {}", 
+                        SecurityFliterUtils.loggerwhiteListSecurityCode(file.getCanonicalPath()));
+            }
+            catch (IOException e1)
+            {
+                logger.error("[SEQ_TEMPLATE_VERIFY]: getCanonicalPath is error throws IOException");
+            }
+        }
+        finally
+        {
+            CloseableUtils.closeStream(in);
+        }
+        return map;
+    }
+
+}

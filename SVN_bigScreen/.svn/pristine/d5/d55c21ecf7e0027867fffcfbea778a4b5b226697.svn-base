@@ -1,0 +1,83 @@
+{
+    "action": "AGGRE_SDR",
+    "cubes": [
+                "SYS_HOME_CITY_USER"
+            ],
+    "columns": [
+        {
+            "id": "300",
+            "alias": "START_TIME",
+            "type": "TIME",
+            "style": "IDENTIFIER"
+        },
+        {
+            "id": "291150101",
+            "alias": "HOME_PROVINCE_ID",
+            "type": "DIMENSION",
+            "style": "IDENTIFIER"
+        },
+        {
+            "id": "SYS_CHUNBAO_GRP_USER_NUM",
+            "alias": "USER_NUM",
+            "type": "COUNTER",
+            "style": "IDENTIFIER"
+        },
+        {
+            "id": "SYS_CHUNBAO_GRP_4G_USER_NUM",
+            "alias": "4G_USER_NUM",
+            "type": "COUNTER",
+            "style": "IDENTIFIER"
+        },
+        {
+            "id": "SYS_CHUNBAO_GRP_CNTV_USER_NUM",
+            "alias": "CHUNWAN_USER",
+            "type": "COUNTER",
+            "style": "IDENTIFIER"
+        },
+        {
+            "id": "SYS_CHUNBAO_GRP_HONGBAO_USER_NUM",
+            "alias": "HONBAO_USER",
+            "type": "COUNTER",
+            "style": "IDENTIFIER"
+        },
+        {
+            "id": "SYS_CHUNBAO_GRP_DE_USER_NUM",
+            "alias": "DE_USER",
+            "type": "COUNTER",
+            "style": "IDENTIFIER"
+        }
+    ],
+    "conditions": {
+        "relation": "AND",
+        "childs": [
+            {
+                "id": "300",
+                "operator": "GE",
+                "values": [
+                    "@STARTTIME@"
+                ],
+                "type": "TIME",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            },
+            {
+                "id": "300",
+                "operator": "LT",
+                "values": [
+                    "@ENDTIME@"
+                ],
+                "type": "TIME",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            }
+        ]
+    },
+    "orders": [
+        {
+            "id": "300",
+            "type": "TIME",
+            "style": "IDENTIFIER",
+            "descending": true
+        }
+    ]
+}

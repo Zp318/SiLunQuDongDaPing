@@ -1,0 +1,74 @@
+{
+    "action": "AGGRE_SDR",
+    "cubes": [
+                "SDR_TAC_SUBSCRIBER_NUM"
+            ],
+    "columns": [
+        {
+            "id": "203010101",
+            "alias": "BRAND_NAME",
+            "type": "DIMENSION",
+            "style": "IDENTIFIER"
+        },
+        {
+            "id": "203050101",
+            "alias": "TAC_NO",
+            "type": "DIMENSION",
+            "style": "IDENTIFIER"
+        },
+        {
+            "id": "COMMON_VOLTE_VOLTE_USER_NUM",
+            "alias": "VOLTE_USER_NUM",
+            "type": "COUNTER",
+            "style": "IDENTIFIER"
+        },
+        {
+            "id": "COMMON_VOLTE_PS_USER_NUM",
+            "alias": "4G_USER_NUM",
+            "type": "COUNTER",
+            "style": "IDENTIFIER"
+        }
+    ],
+    "conditions": {
+        "relation": "AND",
+        "childs": [
+            {
+                "id": "86400",
+                "operator": "GE",
+                "values": [
+                    "@START_TIME@"
+                ],
+                "type": "TIME",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            },
+            {
+                "id": "86400",
+                "operator": "LT",
+                "values": [
+                    "@END_TIME@"
+                ],
+                "type": "TIME",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            },
+            {
+                "id": "203050101",
+                "operator": "ISNOTNULL",
+                "type": "DIMENSION",
+                "style": "IDENTIFIER",
+                "ignoreCase": false
+            }
+        ]
+    },
+    "orders": [
+        {
+            "id": "COMMON_VOLTE_VOLTE_USER_NUM",
+            "type": "COUNTER",
+            "style": "IDENTIFIER",
+            "descending": true
+        }
+    ],
+    "start": 0,
+    "limit": 10
+}

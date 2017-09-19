@@ -1,0 +1,18 @@
+.MainContenct-conatner{
+	width: calc(100% - 0.5rem);
+	height: 100px;
+	
+	margin: 0 auto;
+	margin-top: 0.18rem;
+
+	display: -webkit-flex; /* Safari */
+  	display: flex;
+}
+
+.left-content{
+	flex:1;
+}
+.right-content{
+	flex:1;
+	margin-left: 0.12rem;
+}

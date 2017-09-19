@@ -1,0 +1,21 @@
+/**
+ * Created by gonghong on 2017-05-16;
+ * @description [业务自动开通成功率容器组件]
+ */
+
+import EchartsBarBox from '../EchartsBarBox/EchartsBarBox';
+
+import React,{Component} from 'react';
+
+export default class ServiceRateConatner extends Component{
+	constructor(props){
+		super();
+	}
+	render(){
+		return(
+			<div>
+				<EchartsBarBox indexName='业务自动开通成功率' echartId='serviceRateId'/>
+			</div>
+		)
+	}
+}

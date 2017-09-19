@@ -1,0 +1,29 @@
+/**
+ * Created by gonghong on 2017-05-16;
+ * @description [VoLTE通话时长占比容器组件]
+ */
+
+import Apis from '../../utils/apis';
+
+import EchartsBarBox from '../EchartsBarBox/EchartsBarBox';
+
+import React,{Component} from 'react';
+
+export default class CallRatioContaner extends Component{
+	constructor(props){
+		super();
+	}
+	componentDidMount(){
+		/**
+		 * @function:组件渲染完成;
+		 */
+		
+	}
+	render(){
+		return(
+			<div>
+				<EchartsBarBox indexName='VoLTE通话时长占比' echartId='callRatioId'/>
+			</div>
+		)
+	}
+}

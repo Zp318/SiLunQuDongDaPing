@@ -1,0 +1,485 @@
+/*
+*created by zhangpeng at 2017-05-16
+*生成echarts图表组件：
+*初始化渲染、定时刷新、点击跳转
+ */
+
+import React, { Component } from 'react';
+import './BarComponentStyle.css';
+import urls from '../../urls/urls';
+import $ from "jquery"; 
+import echarts from 'echarts';
+import {connect} from 'react-redux';
+import {getTime} from '../../actions/action.js' 
+
+class BarComponent extends Component {
+	componentDidMount(){
+		const me = this;
+		var startTime;
+		var endTime;
+		var idArray = [];
+		var minY = 60;
+		var darpRateMax = 0.12;
+		var ele = echarts.init(document.getElementsByClassName("bar_init")[me.props.initIndex]);
+		/*
+		*echartsRender函数：
+		*用作echarts图表初始化渲染
+		 */
+		var echartsRender = function(){
+			const {dispatch} = me.props;
+			$.ajax({
+				type:"POST",
+				url:urls.indicators,
+				dataType:"json",
+				headers:{
+					'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+					"X-CSRF-TOKEN":$("meta[name='_csrf']").attr("content")
+				},
+				data:me.props.initIndex==1 ? {indicators:JSON.stringify([me.props.dataone,me.props.datatwo])} : {indicators:JSON.stringify([me.props.dataone])}
+			}).done(function(res){
+				if(res.code == "200"){
+					if(document.getElementsByClassName("top_time")[0].getAttribute("style") !== "visibility:visible"){
+						
+						var time1 = new Date(res.starttime*1000);
+						var a1 = time1.getFullYear();
+						var b1 = time1.getMonth()+1>9 ? time1.getMonth()+1 : "0"+(time1.getMonth()+1);
+						var c1 = time1.getDate()>9 ? time1.getDate() : "0"+time1.getDate();
+						var d1 = time1.getHours()>9 ? time1.getHours() : "0"+time1.getHours();
+						var e1 = time1.getMinutes()>9 ? time1.getMinutes() : "0"+time1.getMinutes();
+
+						var time2 = new Date(res.endtime*1000);
+						var a2 = time2.getFullYear();
+						var b2 = time2.getMonth()+1>9 ? time2.getMonth()+1 : "0"+(time2.getMonth()+1);
+						var c2 = time2.getDate()>9 ? time2.getDate() : "0"+time2.getDate();
+						var d2 = time2.getHours()>9 ? time2.getHours() : "0"+time2.getHours();
+						var e2 = time2.getMinutes()>9 ? time2.getMinutes() : "0"+time2.getMinutes();
+						dispatch(getTime({startYear:a1,startMonth:b1,startDate:c1,startHour:d1,startMinute:e1,endYear:a2,endMonth:b2,endDate:c2,endHour:d2,endMinute:e2}))
+						document.getElementsByClassName("top_time")[0].setAttribute("style","visibility:visible")
+					}
+					if(res.data.length > 1 && res.data[0].data.length == 0 && res.data[1].data.length == 0){
+						// 请求成功,但数据为0条，显示“NoData”
+						$(".bar_init").eq(me.props.initIndex).text("No Data");
+						$(".bar_init").eq(me.props.initIndex).addClass("nodata");
+					}else if(res.data.length == 1 && res.data[0].data.length == 0){
+						// 请求成功,但数据为0条，显示“NoData”
+						$(".bar_init").eq(me.props.initIndex).text("No Data");
+						$(".bar_init").eq(me.props.initIndex).addClass("nodata");
+					}else{
+						startTime = res.starttime;
+						endTime = res.endtime;
+						/*
+						*xAxisData——X轴数组
+						*seriesOne——左轴数组
+						*seriesTwo——右轴数组
+						 */
+						var xAxisData=[];
+						var seriesOne=[];
+						var seriesTwo=[];
+						var series_One = [];
+						var LimitNum;
+						switch(res.data[0].legend){
+							case "SF_VOLTE_REGISTER_SUCC_RATE_1":LimitNum = 82;
+								break;
+							case "SF_VOLTE_CONNECT_RATE_1":LimitNum = 90;
+								break;
+							case "VOICE_MO_ALERT_AVG_DELAY":LimitNum = 85;
+								break;
+							case "SF_SV_ESRVCC_SUCC_RATE_1":LimitNum = 75;
+								break;
+							case "SF_VOLTE_CALL_DROP_RATE_1":LimitNum = 65;
+								break;
+							case "SF_VOLTE_MOS_GOOD_RATE":LimitNum = 45;
+								break;
+							case "CSFB_FALLBACK_SUCCESS_RATE":LimitNum = 25;
+								break;
+							default :LimitNum = 0;
+								break;
+						}
+
+						for(var i=0;i<res.data[0].data.length;i++){
+							xAxisData.push(res.data[0].data[i].NAME);
+							seriesOne.push(res.data[0].data[i].VALUE);
+							idArray.push(res.data[0].data[i].ID);
+							var oneData = {
+								"value":res.data[0].data[i].VALUE,
+								"itemStyle":{
+									"normal":{
+										// "color":res.data[0].data[i].VALUE>LimitNum ? "#3dcce4" : "#ff292d"
+										"color":"#3dcce4"
+									},
+									"emphasis":{
+										// "color":"#19b2f4"
+										"color":"#fd637b"
+									}
+								}
+							}
+							series_One.push(oneData);
+						}
+
+						if(res.data[0].data.length == 0){
+							for(var i=0;i<res.data[1].data.length;i++){
+								xAxisData.push(res.data[1].data[i].NAME);
+							}
+						}
+						
+						if(res.data.length > 1){
+							for(var i=0;i<res.data[1].data.length;i++){
+								seriesTwo.push(res.data[1].data[i].VALUE);
+							}
+						}
+
+						// 掉话率的最大值
+						darpRateMax = Math.max.apply(Math,seriesOne);
+
+						// 求左轴的最小值(过滤掉为空的情况)
+						var newSeriesOnes = [];
+						newSeriesOnes = seriesOne.filter(function(x){
+							return x != "";
+						});
+						var minY = Math.min.apply(Math,newSeriesOnes);
+
+						//图表配置项 
+						var option ={
+							color: ["#3DCCE4" , "#2B9CD4"],
+							tooltip : {
+								show:true,
+						        // trigger:res.data.length > 1 ? "item" : "axis",
+						        trigger:"item",
+						        confine:true,
+						        formatter: function(e){
+						        	if(res.data.length > 1){
+						        		if(e.componentType !== "markLine"){
+							        		if(e.seriesName === "VOICE_MO_ALERT_AVG_DELAY"){
+								        		return e.name + '<br />' + e.value + 'ms'
+								        	}else{
+								        		return e.name + '<br />' + e.value + '%'
+								        	}
+						        		}else{
+						        			return "阈值" + '<br />' + e.data.coord[1] + '%'
+						        		}
+						        	}else{
+						        		if(e.componentType !== "markLine"){
+							        		if(e.value === ""){
+							        			return ""
+							        		}else{
+							        			return e.name + '<br />' + e.value + '%'
+							        		}
+							        	}else{
+							        		return "阈值" + '<br />' + e.data.coord[1] + '%'
+							        	}
+						        	}
+						        }
+						    },
+						    grid: {
+						        left: '4%',
+						        right: '3%',
+						        bottom: '5%',
+						        top: '10%',
+						        containLabel: true,
+						        borderColor:"#D1D9E2"
+						    },
+						    xAxis : [
+					        	{
+						            type : 'category',
+						            data : xAxisData,
+						            axisLine:{
+						            	lineStyle:{
+						            		color:"#4E545D"
+						            	}
+						            },
+						            axisTick:{
+						            	show:false
+						            },
+						            axisLabel:{
+						            	interval:0,
+						            	textStyle:{
+						            		color:"#4E545D",
+						            		fontSize:12
+						            	}
+						            }
+						        }
+						    ],
+						    yAxis : res.data.length > 1 ? [
+						        {
+						            type : 'value',
+						            nameGap:5,
+						            max:100,
+						            min:parseInt(minY/10)*10,
+						            axisLine:{
+						            	lineStyle:{
+						            		color:"#4E545D"
+						            	}
+						            },
+						            axisTick:{
+						            	show:false
+						            },
+						            axisLabel:{
+						            	textStyle:{
+						            		color:"#4E545D"
+						            	},
+						            	formatter:"{value}%",
+						            	showMaxLabel:true,
+						            	showMinLabel:true
+						            }
+						        },
+						        {
+						            type : 'value',
+						            name:res.data[1].unit,
+						            nameGap:5,
+						            splitLine:{
+						            	show:false
+						            },
+						            axisLine:{
+						            	lineStyle:{
+						            		color:"#4E545D"
+						            	}
+						            },
+						            axisTick:{
+						            	show:false
+						            },
+						            axisLabel:{
+						            	textStyle:{
+						            		color:"#4E545D"
+						            	}
+						            }
+						        }
+						    ] : [
+						    	{
+						            type : 'value',
+						            nameGap:5,
+						            max:res.data[0].legend == "SF_VOLTE_CALL_DROP_RATE_1" ? darpRateMax : 100,
+						            min:(function(){
+						            	if(res.data[0].legend == "SF_VOLTE_CALL_DROP_RATE_1"){
+						            		return 0
+						            	}else{
+						            		return parseInt(minY/10)*10
+						            	}
+						            }()),
+						            axisLine:{
+						            	lineStyle:{
+						            		color:"#4E545D"
+						            	}
+						            },
+						            axisTick:{
+						            	show:false
+						            },
+						            axisLabel:{
+						            	textStyle:{
+						            		color:"#4E545D"
+						            	},
+						            	formatter:"{value}%",
+						            	showMaxLabel:true,
+						            	showMinLabel:true
+						            }
+						        }
+						    ],
+						    series: res.data.length > 1 ? [
+						    	{
+						            name:res.data[0].legend,
+						            yAxisIndex:0,
+						            type:'bar',
+						            data:series_One,
+						            itemStyle:{
+						            	normal:{
+						            		barBorderRadius: 20
+						            	},
+						            	emphasis:{
+						            		color:"#FF6878"
+						            	}
+						            },
+						            barMaxWidth:22
+						        //     ,
+						        //     markLine:{
+						        //     	symbol:"",
+							       //  	symbolSize:0,
+						        //     	lineStyle:{
+						        //     		normal:{
+						        //     			color:"#ff6b6e",
+						        //     			type:"dashed",
+						        //     			width:1
+						        //     		}
+						        //     	},
+						        //    		data:[
+						        //    			[
+										    //     {
+										    //         coord: [res.data[0].data[0].NAME, LimitNum]
+										    //     },
+										    //     {
+										    //         coord: [res.data[0].data[res.data[1].data.length-1].NAME, LimitNum]
+										    //     }
+										    // ]
+						        //    		]
+						        //     }
+						        },
+						        {
+						            name:res.data[1].legend,
+						            type:'line',
+						            yAxisIndex:1,
+						            data:seriesTwo,
+						            itemStyle:{
+						            	emphasis:{
+						            		color:"#FF6878"
+						            	}
+						            },
+						            symbol:"circle",
+						            symbolSize:7
+						        }
+						    ] : [
+						    	{
+						            name:res.data[0].legend,
+						            type:'bar',
+						            data:series_One,
+						            itemStyle:{
+						            	normal:{
+						            		barBorderRadius: 20
+						            	},
+						            	emphasis:{
+						            		color:"#FF6878"
+						            	}
+						            },
+						            barMaxWidth:22
+						        //     ,
+						        //     markLine:{
+						        //     	symbol:"",
+							       //  	symbolSize:0,
+						        //     	lineStyle:{
+						        //     		normal:{
+						        //     			color:"#ff6b6e",
+						        //     			type:"dashed",
+						        //     			width:1
+						        //     		}
+						        //     	},
+						        //    		data:[
+						        //    			[
+										    //     {
+										    //         coord: [res.data[0].data[0].NAME, LimitNum]
+										    //     },
+										    //     {
+										    //         coord: [res.data[0].data[res.data[0].data.length-1].NAME, LimitNum]
+										    //     }
+										    // ]
+						        //    		]
+						        //     }
+						        }
+						    ]
+						}
+
+						// 是否设置最小高度
+						var newSeriesOne = [];
+						newSeriesOne = seriesOne.filter(function(x){
+							return x != "";
+						});
+						var seriesOneMin = Math.min.apply(Math,newSeriesOne);
+						if(seriesOneMin > 0){
+							option.series[0].barMinHeight = 5;
+						}
+						
+						ele.setOption(option);
+					}
+				}else{
+					// 请求成功，code != 200,显示“NoData”
+					$(".bar_init").eq(me.props.initIndex).text("No Data");
+					$(".bar_init").eq(me.props.initIndex).addClass("nodata");
+				}
+			}).fail(function(err){
+				// 请求失败,显示“NoData”
+				$(".bar_init").eq(me.props.initIndex).text("No Data");
+				$(".bar_init").eq(me.props.initIndex).addClass("nodata");
+			});
+		}
+
+		// 初始化渲染
+		echartsRender();
+
+		// 窗口大小变化时图表自适应
+		window.addEventListener("resize",function(){
+			ele.resize();
+		});	
+
+		// 15分钟定时刷新
+		setInterval(function(){
+			ele.clear();
+			echartsRender();
+		},900000);	
+
+		// 点击柱状图或趋势图
+		ele.on("click",(e) => {
+			/*
+			*regionid——地市ID
+			*drillUrlParam——传参
+			 */
+			var regionid = idArray[e.dataIndex];
+			var drillUrlParam = "";
+
+			/*
+			*跳转函数toUrl
+			*@url：下钻的url路径
+			 */
+			var toUrl = function(pagename,url,params){
+				try{
+					top.showTabPanel
+				}
+				catch(e){
+					// var totalUrl = "https://10.25.122.70:8443/cas/login?autologin=1&name=hw_silunqudong&pwd=4D4346348F8EC14ED1FA5194BC85040D%2610000%2676C87BFDADF29C8C92537F5FCCF14C291CC95C4CA4F24FEFCCFD9CC31B435DDF&service=" + encodeURIComponent(url+params);
+					var totalUrl = "https://10.25.122.70:8443/cas/login?autologin=1&name=hw_silunqudong&pwd=606128563E2BF8E740206415BDE126C5%2610000%266721EE8B49900073FE72DCF9A9B848BEA4B30F9AB7BBE781E4F6F442627DAA1B&service=" + encodeURIComponent(url+params);
+					
+					window.location.href = totalUrl;
+					return;
+				}
+
+				if(top.showTabPanel && $.type( top.showTabPanel ) === "function"){
+					if(params === ""){
+						top.showTabPanel(pagename,specialId.replace(/[^\w]/gi,""),url+params);
+					}else{
+						top.showTabPanel(pagename,params.replace(/[^\w]/gi,""),url+params);
+					}
+				}else{
+					if(top.document.getElementsByTagName('iframe').length === 0){
+						var newTab=window.open('about:blank');
+						newTab.location.href=url + params;
+						// window.open(url + params);
+						console.log("____________",encodeURIComponent(url+params));
+					}else{
+						var halfUrl = top.document.getElementsByTagName('iframe')[0].getAttribute('src').substr(0,top.document.getElementsByTagName('iframe')[0].getAttribute('src').indexOf('service=')+8);
+						var totalUrl = halfUrl + encodeURIComponent(url+params);
+						top.document.getElementsByTagName('iframe')[0].setAttribute('src',totalUrl);
+						console.log("++++++++++++++++++++++++++++",totalUrl);
+					}
+				}
+			}
+			// 点击图表下钻到对应页面
+			if(e.seriesType === "bar" && e.seriesName === "SF_VOLTE_REGISTER_SUCC_RATE_1"){
+				drillUrlParam = "?areaDim=" + regionid + "&timeDim=3600" + "&tabKey=2";
+				toUrl("VoLTE注册成功率",window.urlConfig.registerSuccessRate,drillUrlParam);
+			}else if(e.seriesType === "bar" && e.seriesName === "SF_VOLTE_CONNECT_RATE_1"){
+				drillUrlParam = "?areaDim=" + regionid + "&timeDim=3600" + "&tabKey=4";
+				toUrl("VoLTE接通率",window.urlConfig.connectRate,drillUrlParam);
+			}else if(e.seriesType === "line" && e.seriesName === "VOICE_MO_ALERT_AVG_DELAY"){
+				drillUrlParam = "?dsId=0bc249a8-4dd5-e300-0e39-89253775470d&type=0&templateType=0";
+				toUrl("VoLTE接通时延",window.urlConfig.connectDelay,drillUrlParam);
+			}else if(e.seriesType === "bar" && e.seriesName === "SF_SV_ESRVCC_SUCC_RATE_1"){
+				drillUrlParam = "?areaDim=" + regionid + "&timeDim=3600" + "&tabKey=6";
+				toUrl("SRVCC切换成功率",window.urlConfig.srvccSuccessRate,drillUrlParam);
+			}else if(e.seriesType === "bar" && e.seriesName === "SF_VOLTE_CALL_DROP_RATE_1"){
+				drillUrlParam = "?areaDim=" + regionid + "&timeDim=3600" + "&tabKey=5";
+				toUrl("VoLTE掉话率",window.urlConfig.callDropRate,drillUrlParam);
+			}else if(e.seriesType === "bar" && e.seriesName === "SF_VOLTE_MOS_GOOD_RATE"){
+				drillUrlParam = "?areaDim=" + regionid + "&timeDim=3600" + "&tabKey=3";
+				toUrl("MOS大于3.0占比",window.urlConfig.mosGoodRate,drillUrlParam);
+			}else if(e.seriesType === "bar" && e.seriesName === "CSFB_FALLBACK_SUCCESS_RATE"){
+				var specialId = "areaDim=" + regionid + "&timeDim3600" + "&tabKey";
+				toUrl("CSFB回落成功率",window.urlConfig.fallbackSuccessRate,"");
+			}
+		})	
+	}
+
+	render() {
+	    return (
+	      <div className="bar_init">
+	       	
+	      </div>
+	    );
+	}
+}
+
+export default connect()(BarComponent);

@@ -1,0 +1,3 @@
+{
+	"undefinedquery/indicators":"indicators.json"
+}

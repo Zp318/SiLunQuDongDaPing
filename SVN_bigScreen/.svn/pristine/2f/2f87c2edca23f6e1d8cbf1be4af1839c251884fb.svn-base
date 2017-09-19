@@ -1,0 +1,68 @@
+package com.huawei.sc_mobile_fwd.pages.service.impl;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import com.alibaba.fastjson.JSON;
+import com.huawei.sc_mobile_fwd.pages.dao.SeqTemplateDao;
+import com.huawei.sc_mobile_fwd.pages.service.SeqTemplateService;
+
+/**
+ * 
+ * SEQ模板Service
+ *
+ */
+@Service("seqTemplateService")
+public class SeqTemplateServiceImpl implements SeqTemplateService
+{
+    /**
+     * 日志
+     */
+    private static final Logger logger = LoggerFactory.getLogger(SeqTemplateServiceImpl.class);
+
+    /**
+     * SEQ模板Dao
+     */
+    private SeqTemplateDao seqTemplateDao = null;
+    
+    @Resource(name = "seqTemplateDao")
+    public void setSeqTemplateDao(SeqTemplateDao seqTemplateDao)
+    {
+        this.seqTemplateDao = seqTemplateDao;
+    }
+
+    private String convertMapToJsonData(Map<String, Object> mapData)
+    {
+        logger.debug("[sc_mobile_fwd]: entering into SeqTemplateServiceImpl.convertMapToJsonData()");
+        String jsonData = JSON.toJSONString(mapData);
+        logger.debug("[sc_mobile_fwd]: Sign out SeqTemplateServiceImpl.convertMapToJsonData()");
+        return jsonData;
+    }
+
+    /**
+     * 检索首页数据
+     * 
+     * @param paramsMap 参数
+     * @return 检索的数据
+     */
+    @Override
+    public String queryData(Map<String, Object> paramsMap)
+    {
+        logger.debug("[sc_mobile_fwd]: entry SeqTemplateServiceImpl.queryData()");
+
+        List<Map<String, Object>> resultList = seqTemplateDao.queryData(paramsMap);
+        
+        Map<String, Object> dataMap = new HashMap<String, Object>();
+        dataMap.put("data", resultList);
+        logger.debug("[sc_mobile_fwd]: exit SeqTemplateServiceImpl.queryData()");
+        return convertMapToJsonData(dataMap);
+    }
+
+}

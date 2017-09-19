@@ -1,0 +1,164 @@
+/**
+ * Created by gonghong on 2017-05-16;
+ * @description [VoLTE通话时长占比容器组件]
+ */
+
+import Apis,{PARAMS_ID} from '../../utils/apis';
+
+import {getData,guid} from '../../utils/util';
+
+import EchartsBarBox from '../EchartsBarBox/EchartsBarBox';
+
+import React,{Component} from 'react';
+
+const options= {
+    color: ['#3DCCE4'],
+    tooltip : {
+        trigger: 'item',
+        axisPointer : {  
+            type : 'shadow'        
+        },
+        formatter:'{b} : {c0}%'
+    },
+    grid: {
+        left: '0%',
+        right: '0%',
+        bottom: '5%',
+        top: '10%',
+        containLabel: true,
+        borderColor:"#D1D9E2"
+    },
+    xAxis : [
+        {
+            type : 'category',
+            data : [],
+            axisLine:{
+            	lineStyle:{
+            		color:"#4E545D"
+            	}
+            },
+            axisTick:{
+            	show:false
+            },
+            axisLabel:{
+            	interval:0,
+            	textStyle:{
+            		color:"#4E545D",
+            		fontSize:12
+            	}
+            }
+        }
+    ],
+    yAxis : [
+        {
+            type : 'value',
+            nameGap:5,
+            max:100, 
+            axisLine:{
+            	lineStyle:{
+            		color:"#4E545D"
+            	}
+            },
+            axisTick:{
+            	show:false
+            },
+            axisLabel:{
+               textStyle:{
+                color:"#4E545D"
+               },
+               formatter:"{value}%",
+               showMaxLabel:true,
+               showMinLabel:true
+            }
+        }
+    ],
+    series : [
+        {
+            name:'',
+            type:'bar',
+            itemStyle:{
+            	normal:{
+            		barBorderRadius: 20
+            	},
+            	emphasis:{
+            		color:"#FF6878"
+            	}
+            },
+            barMaxWidth:22,
+            data:[]
+        }
+    ]
+}
+
+export default class CallRatioContaner extends Component{
+	constructor(props){
+		super();
+		this.state={
+			barId:[],
+			starttime:"",
+			endtime:"",
+			options:options
+		}
+		this.starttime;
+		this.endtime;
+	}
+	componentDidMount(){
+		/**
+		 * @function:组件渲染完成;
+		 */
+		let me=this;
+		getData(
+			Apis.PAGE_URL,
+			{
+				indicators:JSON.stringify(PARAMS_ID.SF_VOLTE_CALL_PARAM)
+			},
+			function(data){
+				if(data.code==200){
+
+                  
+
+					me.starttime=data.starttime;
+					me.endtime=data.endtime;
+					var xAxisData=[];
+					var seriesData=[];
+					var barId=[];
+					options.yAxis[0].unit=data.data[0].unit;
+					var legend=data.data[0].legend;
+					data.data[0].data.map(function(item){
+						xAxisData.push(item.name);
+						seriesData.push(Number(item.value));
+						barId.push(item.id);
+
+					})
+					options.xAxis[0].data=xAxisData;
+					options.series[0].data=seriesData;
+					me.setState({
+						options:options,
+						barId:barId,
+						
+					})
+				}
+			}
+		)
+	}
+	echartOnClick(event){
+		var me=this;
+		//var url=window.urlConfig.callTimePercent+`?startTime=${me.starttime}&endTime=${me.endtime}`;
+		var url=window.urlConfig.callTimePercent;
+		if(top.showTabPanel){
+           top.showTabPanel("VoLTE通话时长占比",guid(),url);
+        }else{
+        	window.open(url);
+        }
+	}
+	render(){
+		return(
+			<div>
+				<EchartsBarBox indexName='VoLTE通话时长占比' 
+				echartId='callRatioId' 
+				options={this.state.options}
+				echartOnClick={this.echartOnClick.bind(this)}/>
+			</div>
+		)
+	}
+}

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<param_validators allUrlCheck="false" failpath="index.html"
+    stateCode="505">
+    <param_validator url="/forword/customerPerception.action"
+        failpath="index.html" errorHandler="com.ecm.security.core.common.CommonValidateErrorHandler"
+        method="get|post" dataPattern="" validatorSetHandler="" publicvalidator="">
+    </param_validator>
+    <param_validator url="/forword/marketSupport.action"
+        failpath="index.html" errorHandler="com.ecm.security.core.common.CommonValidateErrorHandler"
+        method="get|post" dataPattern="" validatorSetHandler="" publicvalidator="">
+    </param_validator>
+    <param_validator url="/query/indicators.action"
+        failpath="index.html" errorHandler="com.ecm.security.core.common.CommonValidateErrorHandler"
+        method="get|post" dataPattern="" validatorSetHandler="" publicvalidator="">
+    </param_validator>
+</param_validators>

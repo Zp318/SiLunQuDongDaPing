@@ -1,0 +1,11 @@
+var urls = {
+	indicators:window.basePath + "query/indicators.action",
+	registerSuccessRate: window.basePath + 'volteKpiAnalysis/queryRegAnalysis.action',
+	connectRate: window.basePath + 'volteKpiAnalysis/queryAccessAnalysis.action',
+	connectDelay: window.basePath + 'cellQulityAnalysis/initPage.action',
+	srvccSuccessRate: window.basePath + 'volteKpiAnalysis/querySwitchAnalysis.action',
+	callDropRate: window.basePath + 'volteKpiAnalysis/queryDropAnalysis.action',
+	mosGoodRate: window.basePath + 'volteKpiAnalysis/queryDropAnalysis.action',
+	fallbackSuccessRate: window.basePath + 'templateManageController/getQueryTemplateList.action'
+}
+export default urls;

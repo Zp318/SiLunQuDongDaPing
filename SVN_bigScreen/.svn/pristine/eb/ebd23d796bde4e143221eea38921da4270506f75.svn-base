@@ -1,0 +1,40 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="_csrf" content="${_csrf.token}"/>
+<meta name="_csrf_header" content="${_csrf.headerName}"/>
+    <title>支撑市场</title>
+    <%@include file="../common/sweet.jsp"%>
+    <link rel="stylesheet" type="text/css" href="<%=basePath%>pages/sc_mobile_fwd/commons/styles/base.css">
+    <link rel="stylesheet" type="text/css" href="<%=basePath%>pages/sc_mobile_fwd/bracePages/css/main.css">
+</head>
+<script type="text/javascript">
+    (function(win,doc){
+      /**
+       * [stateResize description]
+       * @function:resize事件，改变html字体大小;
+       */
+      function stateResize(){
+        var maxWidth=1920;
+        var minWidth=1366;
+        var w=document.documentElement.clientWidth||1920;
+        if(w>=maxWidth){w=maxWidth;};
+        if(w<=minWidth){w=minWidth;};
+        document.documentElement.style.fontSize=100 * (w / 1920) + 'px';
+      }
+      win.onresize=function(){
+        stateResize();
+      };
+      stateResize();
+    })(window,document);
+  </script>
+<body>
+    <div id="root"></div>
+</body>
+<script type="text/javascript" src="<%=basePath%>pages/sc_mobile_fwd/commons/js/urlConfig.js"></script>
+<script type="text/javascript" src="<%=basePath%>pages/sc_mobile_fwd/bracePages/js/main.js"></script>
+</html>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" id="WebApp_ID" version="3.0">
+  <display-name>SEQ_TEMPLATE</display-name>
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+    <welcome-file>portal/index.jsp</welcome-file>
+  </welcome-file-list>
+  <servlet>
+    <servlet-name>spring-config</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <init-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>/WEB-INF/seqconf/seq/seq-common-test.xml</param-value>
+
+
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>spring-config</servlet-name>
+    <url-pattern>/service/*</url-pattern>
+    <url-pattern>*.action</url-pattern>
+  </servlet-mapping>
+  
+  <!--在Servlet类别中使用 Spring容器功能,则可以使用 ContextLoaderListener, 
+		可以在自定义的Servlet中使用WebApplicationContextUtils,利用它来取得Bean定义档中定义的 Bean实例-->
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>  
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>
+			/WEB-INF/seqconf/seq/seq-ecm.xml;
+			/WEB-INF/seqconf/seq/seq-common-test.xml;
+			/WEB-INF/conf/*/*/timmer/*.xml
+		</param-value>
+	</context-param>
+	
+    <session-config>
+        <session-timeout>20</session-timeout>
+    </session-config>
+    
+    <error-page>
+        <exception-type>java.lang.Throwable</exception-type>
+        <location>/error.jsp</location>
+    </error-page>
+    <error-page>
+        <error-code>404</error-code>
+        <location>/error.jsp</location>
+    </error-page>
+    <error-page>
+        <error-code>500</error-code>
+        <location>/error.jsp</location>
+    </error-page>
+</web-app>

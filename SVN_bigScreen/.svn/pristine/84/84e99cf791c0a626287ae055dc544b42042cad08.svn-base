@@ -1,0 +1,4 @@
+var urls = {
+	indicators:window.basePath + "query/indicators.action"
+}
+export default urls;

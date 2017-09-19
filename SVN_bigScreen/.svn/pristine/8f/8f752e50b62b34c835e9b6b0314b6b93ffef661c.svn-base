@@ -1,0 +1,78 @@
+/**
+ * Created by gonghong on 2017-05-16;
+ * @description [业务自动开通成功率容器组件]
+ */
+
+import Apis,{PARAMS_ID} from '../../utils/apis';
+
+import {getData} from '../../utils/util';
+
+import EchartsBarBox from '../EchartsBarBox/EchartsBarBox';
+
+import React,{Component} from 'react';
+
+export default class ServiceRateConatner extends Component{
+	constructor(props){
+		super();
+		this.state={
+			barId:[],
+			starttime:"",
+			endtime:"",
+			option:{
+				unit:"",
+				legend:"",
+				xAxisData:[],
+				seriesData:[]
+			}
+		}
+	}
+	componentDidMount(){
+		/**
+		 * @function:组件渲染完成;
+		 */
+		let me=this;
+		getData(
+			Apis.PAGE_URL,
+			{
+				indicators:PARAMS_ID.serviceRate_params
+			},
+			function(data){
+				if(data.code==200){
+					var xAxisData=[];
+					var seriesData=[];
+					var barId=[];
+					var unit=data.data[0].unit;
+					var legend=data.data[0].legend;
+					data.data[0].data.map(function(item){
+						xAxisData.push(item.name);
+						seriesData.push(Number(item.value));
+						barId.push(item.id);
+
+					})
+					me.setState({
+						option:{
+							unit:unit,
+							legend:legend,
+							seriesData:seriesData,
+							xAxisData:xAxisData 
+						},
+						barId:barId,
+						
+					})
+				}
+			}
+		)
+	}
+	echartOnClick(event){
+		console.log(event,"222");
+	}
+	render(){
+		return(
+			<div>
+				<EchartsBarBox indexName='业务自动开通成功率' echartId='serviceRateId' 
+				options={this.state.option}
+				echartOnClick={this.echartOnClick.bind(this)}/>
+			</div>
+		)
+	}
+}
